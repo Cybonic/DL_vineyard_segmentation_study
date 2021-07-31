@@ -1,0 +1,17 @@
+.vscode
+/__pycache__/
+cmds.txt
+Temp/
+*/*.pyc
+*.pyc
+checkpoints/*
+psftp/*
+results/*
+training_log.txt 
+other_codes/*
+results*
+demos/*
+log/
+fig/
+original_code/*
+*.jpg

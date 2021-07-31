@@ -1,0 +1,51 @@
+
+device: 'cuda:0'
+name: 'all'  
+# dataset ['esac1','esac2','valdo']
+dataset:
+  name: Multispectral 
+  DESKTOP-SSEDT6V: 'E:\Dataset\greenAI\drone'
+  DESKTOP-5V7R599: 'D:\OneDrive - isr.uc.pt\Datasets\greenAI\learning'
+  train: ['esac1','esac2']
+  test:  ['valdoeiro']
+  loader:
+    shuffle: False
+    batch_size: 1
+    workers: 1 
+  augment: False  
+# Model to be loaded
+network: 
+  model: 'segnet'
+  input_shape: [240,240]
+  drop_rate: 0.5
+  bands:
+    R: True
+    G: True
+    B: True
+    RE: True
+    NIR: True 
+    thermal: True
+  index:
+    NDVI: False
+
+  pretrained: 
+    use: False
+    path: 'checkpoints\t1\ms'
+    file: 'all_segnet_best'
+# training parameters
+max_epochs: 100
+report_val: 5
+# optimization parameters
+optimizer:
+  lr: 0.001
+  w_decay: 0
+  amsgrad: True
+  betas: [0.9, 0.99]
+  epsilon_w:  0.000000001 
+# Saving settings
+saver:
+  file: t1
+  result_dir: 'results'  
+  prediction_dir: 'prediction'
+
+  
