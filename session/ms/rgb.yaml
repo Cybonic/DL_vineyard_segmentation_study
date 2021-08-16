@@ -33,8 +33,8 @@ network:
     path: 'checkpoints\t1\ms'
     file: 'rgb_segnet_best'
 # training parameters
-max_epochs: 100
-report_val: 5
+max_epochs: 5
+report_val: 1
 # optimization parameters
 optimizer:
   lr: 0.001

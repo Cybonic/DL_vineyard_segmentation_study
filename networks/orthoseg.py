@@ -9,10 +9,10 @@ Reference:
 
 
 from networks import unet_bn 
-from networks import MFNet
+#from networks import MFNet
 from networks import segnet
 from networks import modsegnet
-from networks.fcn import fcn32s, fcn8s
+#from networks.fcn import fcn32s, fcn8s
 import torch.nn.init as init
 
 import torch.nn as nn

@@ -37,9 +37,9 @@ from torch import nn
 from networks.orthoseg import OrthoSeg 
 from utils.saver import saver 
 # from inference import eval_net
-from ndvi_inference import eval_net
-from ndvi_inference import logit2label
-from ndvi_inference import evaluation
+from inference import eval_net
+from inference import logit2label
+from inference import evaluation
 import platform
 
 LOSS_WEIGHTS = {'RGBX7':4.9,'Multispectral':5.05}
@@ -195,7 +195,7 @@ if __name__ == '__main__':
       '--session', '-f',
       type=str,
       required=False,
-      default='ms/nir',
+      default='ms/rgb',
       #default='unet_rgb_augment',
       help='Directory to get the trained model.'
   )
