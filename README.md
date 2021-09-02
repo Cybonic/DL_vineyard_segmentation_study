@@ -58,4 +58,5 @@ If you use our framework, model, or predictions for any academic work, please ci
 
 
 # To-Do
+- make production pipeline
 - change multispectral data format from npy to image per band  
