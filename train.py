@@ -100,7 +100,14 @@ def network_wrapper(session_settings,pretrained_file= None):
 
 def dataset_loader_wrapper(session_settings):
   """
-  
+  dataset parser
+
+  Input: 
+   - session_settings: file name to settings
+  Output: 
+   - testloader
+   - trainloader
+
   """
   pc_name = platform.node()
   print("[INFO]: "+ pc_name)
@@ -126,23 +133,27 @@ def dataset_loader_wrapper(session_settings):
 
   augment = dataset['augment']
 
-  dataset= dataset_loader(root = root,
-                          sensor = sensor,
-                          bands = bands,
-                          agro_index= agro_index,
-                          augment = augment,
-                          trainset = trainset,
-                          testset = testset,
+  dataset= dataset_loader(root = root, # path to dataset 
+                          sensor = sensor, # [Multispectral,RGBX7]
+                          bands = bands, # [R,G,B,NIR,RE,Thermal]
+                          agro_index= agro_index,# [NDVI]
+                          augment = augment, #[True, False]
+                          trainset = trainset, #[esac1,esca2,valdoeiro] 
+                          testset = testset, #[esac1,esca2,valdoeiro] 
                           batch_size = batch_size ,
                           shuffle = shuffle ,
                           workers = workers,
-                          fraction = {'train':fraction,'test':fraction}
+                          fraction = {'train':fraction,'test':fraction} # [0,1]
                           )
 
-  test = dataset.get_test_loader()
-  train = dataset.get_train_loader()
-  return(train,test)
+  # Get loaders
+  testloader = dataset.get_test_loader()
+  trainloader = dataset.get_train_loader()
 
+  return(trainloader,testloader)
+
+
+# ==================================================
 
 def load_optimizer_wrapper(model,parameters):
 

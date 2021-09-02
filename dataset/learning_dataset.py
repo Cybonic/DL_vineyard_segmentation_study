@@ -102,12 +102,12 @@ class augmentation():
 
 
 class greenAIDataStruct():
-    def __init__(self,root,plot,sensor):
+    def __init__(self,root,vineyard_plot,sensor):
         self.root = root
-        self.plot = plot 
-        self.sensor = sensor 
-
-        self.paths = [ os.path.join(root,p,sensor) for p in plot]
+        self.plot = vineyard_plot # list of vineyard plots
+        self.sensor = sensor # sensor name
+        # build absolut path 
+        self.paths = [ os.path.join(root,p,sensor) for p in vineyard_plot]
 
     def fetch_files(self,folder):
         image_array = np.array([])
