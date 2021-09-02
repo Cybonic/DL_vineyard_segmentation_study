@@ -39,6 +39,9 @@ python 3.7
 Install cuda 
 pip3 install torch==1.8.1+cu111 torchvision==0.9.1+cu111 torchaudio===0.8.1 -f https://download.pytorch.org/whl/torch_stable.html
 
+## TO-DO
+- change the root path code accordingly to the new dataset structure
+- add dataset structure to READ-ME
 
 ## License
 

@@ -96,8 +96,12 @@ def network_wrapper(session_settings,pretrained_file= None):
   model.train()
   return(model, pretrained_path,device)
 
-def dataset_loader_wrapper(session_settings):
+# ==================================================
 
+def dataset_loader_wrapper(session_settings):
+  """
+  
+  """
   pc_name = platform.node()
   print("[INFO]: "+ pc_name)
   dataset = session_settings['dataset']
