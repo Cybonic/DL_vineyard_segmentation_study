@@ -1,31 +1,24 @@
 
-DATASET: https://drive.google.com/drive/folders/1PeDqlXa-TISJcPGB2kaJ547LV5M3E_xU?usp=sharing
+DATASET: https://drive.google.com/drive/folders/1iyrKndWzG9lOM-aVLs2gt3kgJUt0ychE?usp=sharing
 
 
 The dataset contains data from three vineyards from central Portugal (i.e, two vineyards from Coimbra and one from Valdoeiro). The data was acquired with a UAS that had a multispectral and a high-definition cameras onboard. The acquired images were used to build orthomosaics and digital surface models from the respective sites. 
 The dataset's structure: 
-- Drone:
-    |
-    - > paper data
-        - > ESAC1
-            - > Multispectral
-                - > sub-images
-                    - 0000.npy
-                    - 0001.npy
-                - > sub-masks
-                    - 0000.
-            - > HD
-                - > sub-images
-                - > sub-masks
-        - > ESAC2
-            ...
-        - > Valdoeiro 
-            ...
-    -> orthomosaics
-        -> 
-    -> raw data
-        -> Coimbra
-        -> Valdoeiro 
+
+- paper data
+    - > ESAC1
+        - > Multispectral
+            - > sub-images
+                - 0000.npy
+                - 0001.npy
+            - > sub-masks
+                - 0000.
+        - > RGBX7 (HD)
+            - > sub-images
+            - > sub-masks
+    - > ESAC2
+        ...
+    - > Valdoeiro 
 - Mulstispectral(RGB, RE, NIR and Thermal) orthomosaics
 - High-definition orthomosaics 
 - Digital Surface Models 
@@ -62,3 +55,7 @@ The pretrained models with a specific dataset maintain the copyright of such dat
 ## Citations
 
 If you use our framework, model, or predictions for any academic work, please cite the original [paper](https://arxiv.org/abs/2108.01200), and the [dataset](https://drive.google.com/drive/folders/1PeDqlXa-TISJcPGB2kaJ547LV5M3E_xU?usp=sharing).
+
+
+# To-Do
+- change multispectral data format from npy to image per band  
