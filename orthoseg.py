@@ -147,7 +147,16 @@ class orthoseg():
         return(sub_img_list)
     
     def segmentation(self,sub_img_list):
+        '''
+        Semenatic segmentation of sub-images
 
+        INPUT: 
+            [list] of image files
+
+        OUTPUT: 
+            [list] of mask files 
+        
+        '''
         sub_mask_files = []
         for file in sub_img_list:
             img = np.array(mpimg.imread(file))
