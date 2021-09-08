@@ -4,3 +4,8 @@ rasterio
 tqdm 
 sklearn
 albumentations
+torch 
+torchvision 
+torchaudio
+rioxarray
+progressbar2

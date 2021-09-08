@@ -17,6 +17,10 @@ import progressbar
 import matplotlib.image as mpimg
 import torch 
 from networks import unet_bn as unet
+from networks import segnet
+import shutil
+import imageio
+import matplotlib.pyplot as plt
 
 def logit2label(array,thres):
     '''
@@ -35,27 +39,19 @@ def logit2label(array,thres):
 class orthoseg():
     def __init__(self,temp_folder = 'temp',sub_image_size=240, device = 'cuda', thresh = 0.5):
         
+       
         # Load file 
         
         # Split orthomosaic into sub-images
         self.sub_image_size = sub_image_size # image size of the sub images 
         self.temp_folder    = temp_folder #  path to the temp folder
-        self.sub_img        = os.path.join(temp_folder,'sub_img')
-        self.sub_mask       = os.path.join(temp_folder,'sub_masks')
+        self.sub_img_dir    = os.path.join(temp_folder,'sub_img')
+        self.sub_mask_dir   = os.path.join(temp_folder,'sub_masks')
         self.sub_img_list   = [] # array with the sub_image names 
-        
-        if not os.path.isdir(self.sub_img):
-            # create a new directory to save sub_images
-            os.makedirs(self.sub_img)
-            print("[WRN] New directory created: " + self.temp_folder)
-
-        if not os.path.isdir(self.sub_mask):
-            os.makedirs(self.sub_mask)
-            print("[WRN] New directory created: " + self.sub_mask)
 
         # segmentation model
         self.device = device 
-        self.model  = unet.UNET(out_channels=1,  in_channels=3) # UNet has no dropout
+        self.model  = segnet.SegNet(num_classes=1,  n_init_features=3) # UNet has no dropout
         
         self.thresh =  thresh # segmentation Treshold 
         # Device configuration
@@ -112,6 +108,21 @@ class orthoseg():
             list with all subimage file names
 
         '''
+
+                # delete tmp file if it exist
+        if os.path.isdir(self.temp_folder):
+            shutil.rmtree(self.temp_folder)
+            print("[WAN] Directory deleted: %s"%(self.temp_folder))
+
+        #if not os.path.isdir(self.sub_img_dir):
+            # create a new directory to save sub_images
+        os.makedirs(self.sub_img_dir)
+        print("[WRN] New directory created: " + self.sub_img_dir)
+
+        #if not os.path.isdir(self.sub_mask_dir):
+        os.makedirs(self.sub_mask_dir)
+        print("[WRN] New directory created: " + self.sub_mask_dir)
+
         sub_img_list = [] 
 
         target_height = self.sub_image_size
@@ -133,12 +144,12 @@ class orthoseg():
             while(w_itr < width):
                 # Sub-image name + absolute path 
                 #sub_img_path = os.path.join(self.sub_img,"%05d_%05d.png"%(h_itr,w_itr))
-                sub_img_name = "%05d_%05d.png"%(h_itr,w_itr)
+                sub_img_name = "%05d_%05d.jpg"%(h_itr,w_itr)
                 sub_img_list.append(sub_img_name)
                 # crop sub-image
                 sub_array = array[h_itr:h_itr+target_height,w_itr:w_itr+target_width,:]
                 # Save image
-                mpimg.imsave(os.path.join(self.sub_img,sub_img_name), sub_array)
+                mpimg.imsave(os.path.join(self.sub_img_dir,sub_img_name), sub_array)
                 # Next width iteration
                 w_itr = w_itr + target_width
             # Next height iteration
@@ -153,28 +164,38 @@ class orthoseg():
         INPUT: 
             [list] of image files
 
-        OUTPUT: 
-            [list] of mask files 
-        
         '''
-        sub_mask_files = []
-        for file in sub_img_list:
-            img = np.array(mpimg.imread(file))
+
+        bar = progressbar.ProgressBar(max_value=len(sub_img_list))  
+
+        for i,file in enumerate(sub_img_list):
+            img_path = os.path.join(self.sub_img_dir,file)
+            img = np.array(mpimg.imread(img_path)).transpose(2,0,1)
+            img = np.expand_dims(img,0)
+            # img = np.array(mpimg.imread(img_path)).transpose(2,0,1)
             img_torch = torch.from_numpy(img).type(torch.FloatTensor).to(self.device)
-            
+            # Model
             pred_mask = self.model(img_torch)
             mask = logit2label(pred_mask,self.thresh) # Input (torch) output (numpy)
-            mask = mask.cpu().detach().numpy()
+            # image 
+            mpimg.imsave(os.path.join(self.sub_mask_dir,file),mask)
+            bar.update(i)
             # Save mask with the same name to temp folder
 
 
-        return(sub_mask_files)
+    def rebuild(self,file_masks):
+        '''
+        Rebuild ortho mask from the submasks 
 
+        INPUT: 
+            [list] of image files
+        
+        OUTPUT:
+            ortho.tif
 
+        '''
 
-
-
-
+        print("ssss")
 
     def pipeline(self,path_to_file):
         # loading orthomosaic 
@@ -184,23 +205,70 @@ class orthoseg():
         # Splitting
         sub_img_list = self.ortho_splitting(raster)
         # Segmentation network
-        sub_mask_list = self.segmentation(sub_img_list)
+        self.segmentation(sub_img_list)
         # rebuild orthomask
-        orthomask = []
-        return(orthomask)
+        ortho = self.rebuild(sub_img_list)
+
+
+        return()
 
 
 
+def TEST_LOAD_IMG():
+    
+    '''
+    PNG images usually have four channels. 
+    Three color channels for red, green and blue, 
+    and the fourth channel is for transparency, 
+    also called alpha channel.
 
+    '''
+    plt.ion()
 
+    plt.show()
+    
+    img_dir = 'temp/sub_img'
 
-
-
-
-
-
-
-
+    files = [f for f in os.listdir(img_dir) if os.path.isfile(os.path.join(img_dir, f))]
+    print(len(files))
+    bar = progressbar.ProgressBar(max_value=len(files))  
+    for i,file in enumerate(files):
+        file_path = os.path.join(img_dir,file)
+        if not os.path.isfile(file_path):
+            print("File does not exist")
+        img = mpimg.imread(file_path)
         
+        img = img
+        plt.imshow(img)
+        plt.draw()
+        plt.pause(0.001)
+        bar.update(i)
+        img_np = np.asarray(img).transpose(2,0,1)
+
+def TEST_SEGMENTATION():
+
+    model  = segnet.SegNet(num_classes=1,  n_init_features=3).to('cuda:0') # UNet has no dropout
+    img_dir = 'temp/sub_img'
+    files = [f for f in os.listdir(img_dir) if os.path.isfile(os.path.join(img_dir, f))]
+    print(len(files))
+    bar = progressbar.ProgressBar(max_value=len(files))  
+    
+    for i,file in enumerate(files):
+        file_path = os.path.join(img_dir,file)
+        if not os.path.isfile(file_path):
+            print("File does not exist")
+        
+        img = mpimg.imread(file_path)
+        img = np.asarray(img).transpose(2,0,1)
+        img_torch = torch.from_numpy(img).type(torch.FloatTensor).to('cuda:0')
+        pred_mask = model(img_torch)
+        mask = logit2label(pred_mask,0.5) # Input (torch) output (numpy)
+        mask = mask.cpu().detach().numpy()
         
 
+
+
+if __name__ == '__main__':
+
+    TEST_SEGMENTATION()
+    print("MAIN")

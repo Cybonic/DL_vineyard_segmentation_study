@@ -338,7 +338,7 @@ if __name__ == '__main__':
       '--session', '-f',
       type=str,
       required=False,
-      default='t3/ms/nir',
+      default='ms/nir',
       help='Directory to get the trained model.'
   )
 
@@ -347,7 +347,7 @@ if __name__ == '__main__':
       type=str,
       required=False,
       # default="",
-      default = "checkpoints/t3/ms/modsegnet/nir_f1_81",
+      default = "checkpoints/ms/segnet/nir_f1_81",
       help='Directory to get the trained model.'
   )
 
