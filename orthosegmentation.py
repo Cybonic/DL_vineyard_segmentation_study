@@ -246,8 +246,4 @@ if __name__ == '__main__':
   orth_pipeline.pipeline(ortho_file)
 
 
-  network, pretrained_path, device = network_wrapper(session_settings,model= model_name, pretrained_file = pretrained)
-  # Load dataset 
-  # Get train and val loaders
-
 

@@ -57,6 +57,19 @@ The pretrained models with a specific dataset maintain the copyright of such dat
 If you use our framework, model, or predictions for any academic work, please cite the original [paper](https://arxiv.org/abs/2108.01200), and the [dataset](https://drive.google.com/drive/folders/1PeDqlXa-TISJcPGB2kaJ547LV5M3E_xU?usp=sharing).
 
 
+# GDAL Installation in Ubuntu 
+
+based in https://mothergeo-py.readthedocs.io/en/latest/development/how-to/gdal-ubuntu-pkg.html
+
+$ sudo add-apt-repository ppa:ubuntugis/ppa && sudo apt-get update
+$ sudo apt-get update
+$ sudo apt-get install gdal-bin
+$ sudo apt-get install libgdal-dev
+$ export CPLUS_INCLUDE_PATH=/usr/include/gdal
+$ export C_INCLUDE_PATH=/usr/include/gdal
+$ pip install GDAL == <GDAL VERSION FROM OGRINFO>
+
+
 # To-Do
 - make production pipeline
 - change multispectral data format from npy to image per band  
