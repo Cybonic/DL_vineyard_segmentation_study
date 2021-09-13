@@ -87,12 +87,14 @@ def logit2label(array,thres):
     return(new_array)
 
 class orthoseg():
-    def __init__(self,  temp_folder     = 'temp',
-                        sub_image_size  = 240, 
-                        device          = 'cuda', 
-                        thresh          = 0.5,
-                        file_format     = 'BMP'
-                        ):
+    def __init__(self,
+                    ortho_mask_path = 'ortho_mask.tif', 
+                    temp_folder     = 'temp',
+                    sub_image_size  = 240, 
+                    device          = 'cuda', 
+                    thresh          = 0.5,
+                    file_format     = 'BMP'
+                    ):
         
        
         # Load file 
@@ -103,7 +105,7 @@ class orthoseg():
         self.sub_img_dir    = os.path.join(temp_folder,'sub_img')
         self.sub_mask_dir   = os.path.join(temp_folder,'sub_masks')
         self.sub_img_list   = [] # array with the sub_image names 
-
+        self.path_to_save_ortho_mask = ortho_mask_path
         # segmentation model
         self.device = device 
         self.model  = segnet.SegNet(num_classes=1,  n_init_features=3) # UNet has no dropout
@@ -248,33 +250,44 @@ class orthoseg():
             # Save mask with the same name to temp folder
 
 
-    def rebuild(self,mask_raster_file,raster_file,file_masks):
+    def rebuild(self,target_geo_data_file,sub_mask_files):
         '''
         Rebuild ortho mask from the submasks 
 
         INPUT: 
-            [list] of image files
+            - target_geo_data_file
+            - sub_mask_files
         
         OUTPUT:
-            ortho.tif
+            mask_ortho.tif
 
         '''
-        print("[INF] ortho mask: " + raster_file)
-        rebuilded_array = _rebuild_ortho_mask(file_masks,self.sub_mask_dir)
-        
-        raster = gdal.Open(raster_file, gdal.GA_ReadOnly)
-        mask_raster = tif.array2raster(mask_raster_file,raster,rebuilded_array)
+        _func_ = 'Rebuild'
+
+        _ortho_mask_file =self.path_to_save_ortho_mask
+        _target_geo_data_file = target_geo_data_file
+
+        print("[INF|%s] ortho mask: %s"%(_func_,_ortho_mask_file))
+        print("[INF|%s] target geo data file: %s"%(_func_,_target_geo_data_file))
+
+        # Rebuild sub_masks based on the names
+        _ortho_array = _rebuild_ortho_mask(sub_mask_files,self.sub_mask_dir)
+        # Add geo data to array and convert to tif format
+        _ortho_mask_raster = tif.array2raster(  _ortho_mask_file, # path to (output) ortho mask 
+                                                _target_geo_data_file, # path to input ortho file 
+                                                _ortho_array # numpy array with the ortho mask
+                                                )
+        # delete all temp files and directories
         if os.path.isdir(self.temp_folder):
             shutil.rmtree(self.temp_folder)
-            print("[WAN] Directory deleted: %s"%(self.temp_folder))
-        return(mask_raster)
+            print("[WAN|%s] Directory deleted: %s"%(_func_,self.temp_folder))
+        return(_ortho_mask_raster)
 
 
-
-    def pipeline(self,path_to_file):
+    def pipeline(self,path_to_input_ortho):
         # loading orthomosaic 
         print("[INF] Loading ortho")
-        orig_raster = self.load_ortho(path_to_file)
+        orig_raster = self.load_ortho(path_to_input_ortho)
         # preprocessing
         print("[INF] Preprocessing")
         raster = self.preprocessing(orig_raster)
@@ -287,12 +300,9 @@ class orthoseg():
         # rebuild orthomask path_to_save_mask_raster,path_to_ortho,path_to_masks
         print("[INF] Rebuilding")
         # path_to_save_mask_ortho = os.path.join(path_to_file,'ortho_mask.tif')
-        path_to_save_mask_ortho = 'ortho_mask.tif'
-        ortho = self.rebuild(path_to_save_mask_ortho,path_to_file,sub_img_list)
+        ortho = self.rebuild(self.path_to_save_ortho_mask,path_to_input_ortho,sub_img_list)
         print("[INF] Finished")
-        return()
-
-
+        return(ortho)
 
 # ========================================================================================
 
@@ -349,16 +359,19 @@ def TEST_REBUILDING():
 
     ortho_dir = os.path.join(root,"greenAI/drone/quintabaixo/04_05_2021/60m/x7")
     # Path to tif
-    path_to_ortho = os.path.join(ortho_dir,'ortho.tif')
+    path_to_input_ortho = os.path.join(ortho_dir,'ortho.tif')
     # Load raster
-    raster = orthoseg().load_ortho(path_to_ortho)
+    raster = orthoseg().load_ortho(path_to_input_ortho)
     # Get sub-masks' names
     img_dir = 'temp/sub_masks'
-    path_to_masks = [f for f in os.listdir(img_dir) if os.path.isfile(os.path.join(img_dir, f))]
-    #path_to_save_mask_raster = os.path.join(ortho_dir,'mask_ortho.tif')
-    path_to_save_mask_raster = 'mask_ortho.tif'
-    orthoseg().rebuild(path_to_save_mask_raster,path_to_ortho,path_to_masks)
-
+    path_to_sub_masks = [f for f in os.listdir(img_dir) if os.path.isfile(os.path.join(img_dir, f))]
+    
+    # Test rebuild function
+    # Inputs: 
+    # - path_to_input_ortho: 
+    # - path_to_sub_masks:
+    
+    orthoseg().rebuild(path_to_input_ortho,path_to_sub_masks)
 
 if __name__ == '__main__':
 

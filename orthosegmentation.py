@@ -43,106 +43,6 @@ import orthoseg
 
 
 
-def logit2label(array,thres):
-    '''
-    Convetion from a cxmxn logits torch array - where c represents the number of labels - to a 1xmxn label torch array 
-    Parameters 
-      - array: c x m x n torch array of logits
-    Returns
-      - 1 x m x n  array of labels (int) 
-    '''
-    new_array = np.zeros(array.shape,dtype=np.int32)
-    norm_array = torch.nn.Sigmoid()(array).cpu().detach().numpy()
-    bin_class = norm_array >= thres
-    #norm_array[norm_array >= thres]  = 1
-    # norm_array[norm_array < thres] = 0
-    new_array[bin_class] = 1
-    
-
-    return(new_array)
-
-
-def evaluation(gtArray,predArray):
-    '''
-    segmentation evaluation 
-    param:
-     - gtArray: ground truth mask
-     - predArray: prediction mask
-    
-    retrun:
-        dictionary { dice , iou }
-
-    '''
-    
-    #dice = mean_dice_np(gtArray,predArray)
-    #iou = mean_iou_np(gtArray,predArray)
-
-    #gtArray = gtArray.flatten()
-    #predArray = predArray.flatten()
-
-    gtArray = np.array(gtArray,dtype=np.int32)
-    predArray = np.array(predArray,dtype=np.int32)
-    f1 = f1_score(gtArray,predArray)
-
-    metrics = {'f1': f1}
-    return(metrics)
-
-def network_wrapper(session_settings,model = None ,pretrained_file= None):
-
-  network_param = session_settings['network']
-  if model is not None:
-    network_param['model'] = model
-  image_shape = network_param['input_shape']
-  bands= network_param['bands']
-  index = network_param['index']
-  pretrained_path = network_param['pretrained']['path']
-  pretrained_flag = network_param['pretrained']['use']
-
-
-  count = 0
-  for key, value in bands.items():
-    if value == True:
-      count = count +1
-
-  # for key, value in index.items():
-  #   if value == True:
-  #    count = count +1
-
-  model = OrthoSeg(network_param,image_shape,channels=count)
-
-  if pretrained_file == None:
-    pretrained_file = network_param['pretrained']['file']
-    if pretrained_flag == True:
-      pretrained_to_load = os.path.join(pretrained_path,pretrained_file+'.pth')
-      if os.path.isfile(pretrained_to_load):
-        print("[INF] Loading Pretrained model: " + pretrained_to_load)
-        model.load_state_dict(torch.load(pretrained_to_load))
-      else:
-        print("[INF] No pretrained weights loaded: " + pretrained_to_load)
-  else: 
-    pretrained_to_load = pretrained_file+'.pth'
-    if os.path.isfile(pretrained_to_load):
-      
-      model.load_state_dict(torch.load(pretrained_to_load))
-      print("[INF] Loaded Pretrained model: " + pretrained_to_load)
-    else:
-      print("[INF] No pretrained weights loaded: " + pretrained_to_load)
-
-  if not os.path.isdir(pretrained_path):
-    os.makedirs(pretrained_path)
-  # Device configuration
-  device = 'cpu'
-  if torch.cuda.is_available():
-    device = 'cuda:0'
-    torch.cuda.empty_cache()
-
-  model.to(device)
-  model.train()
-  return(model, pretrained_path,device)
-
-
-
-
 
 
 if __name__ == '__main__':
@@ -237,13 +137,13 @@ if __name__ == '__main__':
   if not os.path.isdir(ortho_dir):
     print("[ERROR] dir does not exist")
 
-  ortho_file = os.path.join(ortho_dir,"ortho.tif")
+  path_to_ortho_img = os.path.join(ortho_dir,"ortho.tif")
   # ortho_file = os.path.join(root,path)
-  print("[INF] ROOT: %s"%(ortho_file))
+  print("[INF] Path to ortho img: %s"%(path_to_ortho_img))
 
-  orth_pipeline = orthoseg.orthoseg()
+  ortho_pipeline = orthoseg.orthoseg()
 
-  orth_pipeline.pipeline(ortho_file)
+  ortho_mask = ortho_pipeline.pipeline(path_to_ortho_img)
 
 
 

@@ -89,7 +89,7 @@ def tif2array(input_file):
 
         return image, datatype, dataset
 
-def array2raster(new_rasterf_fn, dataset, array, dtype = gdal.gdalconst.GDT_Float32):
+def array2raster(new_rasterf_fn, target_geo_data_file, array, dtype = gdal.gdalconst.GDT_Float32):
     """
     Save GTiff file from numpy.array
 
@@ -103,10 +103,11 @@ def array2raster(new_rasterf_fn, dataset, array, dtype = gdal.gdalconst.GDT_Floa
         - https://gdal.org/development/rfc/rfc58_removing_dataset_nodata_value.html
     """
     #logging.info(">>>> Converting array to geographic format...")
+    target_geo_raster = gdal.Open(target_geo_data_file, gdal.GA_ReadOnly)
 
     cols = array.shape[1]
     rows = array.shape[0]
-    origin_x, pixel_width, b, origin_y, d, pixel_height = dataset.GetGeoTransform()
+    origin_x, pixel_width, b, origin_y, d, pixel_height = target_geo_raster.GetGeoTransform()
 
     driver = gdal.GetDriverByName('GTiff')
 
@@ -131,7 +132,7 @@ def array2raster(new_rasterf_fn, dataset, array, dtype = gdal.gdalconst.GDT_Floa
             outband.WriteArray(array[:, :, b])
         
     
-    prj = dataset.GetProjection()
+    prj = target_geo_raster.GetProjection()
     out_raster_srs = osr.SpatialReference(wkt=prj)
     out_raster.SetProjection(out_raster_srs.ExportToWkt())
     outband.FlushCache()
