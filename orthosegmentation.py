@@ -39,34 +39,72 @@ from utils.vis_utils import vis
 import platform
 import matplotlib.pyplot as plt
 
+from networks import unet_bn 
+#from networks import MFNet
+from networks import segnet
+from networks import modsegnet
+
 import orthoseg 
 
+def network_wrapper(session_settings,pretrained_file= None):
 
+  network_param = session_settings['network']
+  image_shape = network_param['input_shape']
+  bands= network_param['bands']
+  index = network_param['index']
+  pretrained_path = network_param['pretrained']['path']
+  pretrained_flag = network_param['pretrained']['use']
+  drop_rate = network_param['drop_rate']
+
+
+  # Dump to terminal 
+  print("-"*100)
+  print("[Network] " )
+  for key, value in network_param.items():
+    print("{}: {} ".format(key,value))
+  print("-"*100)
+  if pretrained_file == None:
+    pretrained_file = network_param['pretrained']['file']
+
+  count = 0
+  for key, value in bands.items():
+    if value == True:
+      count = count +1
+
+  model_name = network_param['model']
+
+  if model_name == 'segnet':
+      model = segnet.SegNet(num_classes=1, n_init_features=count,drop_rate= drop_rate)
+  elif model_name == 'unet_bn':
+      model = unet_bn.UNET(out_channels=1, in_channels=count) # UNet has no dropout
+  elif model_name == 'modsegnet':
+      model = modsegnet.ModSegNet(num_classes=1, n_init_features=count,drop_rate= drop_rate)
+
+  #model = OrthoSeg(network_param,image_shape,channels=count,drop_rate = drop_rate)
+
+  if pretrained_flag == True:
+    pretrained_to_load = os.path.join(pretrained_path,pretrained_file+'.pth')
+    if os.path.isfile(pretrained_to_load):
+      print("[INF] Loading Pretrained model: " + pretrained_to_load)
+      model.load_state_dict(torch.load(pretrained_to_load))
+    else:
+      print("[INF] No pretrained weights loaded: " + pretrained_to_load)
+
+
+  # Device configuration
+  device = 'cpu'
+  if torch.cuda.is_available():
+    device = 'cuda:0'
+    torch.cuda.empty_cache()
+
+  model.to(device)
+
+  return(model,device)
 
 
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser("./infer.py")
-  parser.add_argument(
-      '--dataset', '-d',
-      type=str,
-      default = "esac",
-      required=False,
-      help='Dataset to train with. No Default',
-  )
-  parser.add_argument(
-      '--sequence', '-c',
-      type=str,
-      default= ''
-  )
-
-  parser.add_argument(
-      '--model', '-m',
-      type=str,
-      required=False,
-      default='modsegnet',
-      help='Directory to get the trained model.'
-  )
 
   parser.add_argument(
       '--session', '-f',
@@ -75,45 +113,37 @@ if __name__ == '__main__':
       default='hd/rgb',
       help='Directory to get the trained model.'
   )
+  parser.add_argument(
+      '--input_ortho_file', '-i',
+      type=str,
+      required=False,
+      default="E:\\dataset/greenAI/drone/quintabaixo/04_05_2021/60m/x7/ortho.tif",
+      help='path from the Orthomosaic file from the root of the datast.'
+  )
+  parser.add_argument(
+      '--output_ortho_file', '-o',
+      type=str,
+      required=False,
+      default="mask_ortho.tif",
+      help='path from the Orthomosaic file from the root of the datast.'
+  )
 
   parser.add_argument(
       '--pretrained', '-p',
       type=str,
       required=False,
       # default="",
-      default = "checkpoints/t3/ms/modsegnet/nir_f1_81",
-      help='Directory to get the trained model.'
-  )
-
-  parser.add_argument(
-      '--debug', '-b',
-      type=int,
-      required=False,
-      default=False,
-      help='Directory to get the trained model.'
-  )
-
-  parser.add_argument(
-      '--plot',
-      type=int,
-      required=False,
-      default=0,
-      help='Directory to get the trained model.'
-  )
-
-  parser.add_argument(
-      '--results',
-      type=str,
-      required=False,
-      default='session_results.txt',
+      default = "",
       help='Directory to get the trained model.'
   )
 
   FLAGS, unparsed = parser.parse_known_args()
   
-  session = FLAGS.session
-  model_name = FLAGS.model
-  pretrained = None if FLAGS.pretrained == "" else FLAGS.pretrained
+  input_ortho_file  = FLAGS.input_ortho_file
+  output_ortho_file  = FLAGS.output_ortho_file
+  session       = FLAGS.session
+  pretrained    = None if FLAGS.pretrained == "" else FLAGS.pretrained
+
   
   session_file = os.path.join('session',session + '.yaml')
   if not os.path.isfile(session_file):
@@ -123,27 +153,33 @@ if __name__ == '__main__':
   # load session parameters
   session_settings = utils.load_config(session_file)
   # Load network with specific parameters
+  model, device = network_wrapper(session_settings)
+  # segmentation model
+      
+  #pc_name = platform.node() 
+  #print("PC Name: " + pc_name)
+  #if pc_name == 'DESKTOP-SSEDT6V':
+  #  root = "E:\\dataset"
+  #else:
+  #  root = "/home/tiago/BIG/dataset"
 
-  pc_name = platform.node() 
-  print("PC Name: " + pc_name)
-  if pc_name == 'DESKTOP-SSEDT6V':
-    root = "E:\\dataset"
-  else:
-    root = "/home/tiago/BIG/dataset"
 
-  ortho_dir = os.path.join(root,"greenAI/drone/quintabaixo/04_05_2021/60m/x7")
+  #input_ortho_file = os.path.join(root,path_to_file)
   # ortho_dir = os.path.abspath(ortho_dir)
 
-  if not os.path.isdir(ortho_dir):
-    print("[ERROR] dir does not exist")
+  if not os.path.isfile(input_ortho_file):
+    print("[ERROR] File does not exist: %s"%(input_ortho_file))
+    exit(0)
 
-  path_to_ortho_img = os.path.join(ortho_dir,"ortho.tif")
+  #path_to_ortho_img = os.path.join(ortho_dir,"ortho.tif")
   # ortho_file = os.path.join(root,path)
-  print("[INF] Path to ortho img: %s"%(path_to_ortho_img))
+  # print("[INF] Path to ortho img: %s"%(path_to_ortho_img))
 
-  ortho_pipeline = orthoseg.orthoseg()
+  ortho_pipeline = orthoseg.orthoseg( model  = model,
+                                      device = device,
+                                      output_ortho_file = output_ortho_file)
 
-  ortho_mask = ortho_pipeline.pipeline(path_to_ortho_img)
+  ortho_mask = ortho_pipeline.pipeline(input_ortho_file)
 
 
 
