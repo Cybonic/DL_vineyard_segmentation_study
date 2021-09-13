@@ -44,7 +44,7 @@ from networks import unet_bn
 from networks import segnet
 from networks import modsegnet
 
-import orthoseg 
+import orthoseg_pipeline as orthoseg 
 
 def network_wrapper(session_settings,pretrained_file= None):
 
