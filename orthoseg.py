@@ -88,7 +88,8 @@ def logit2label(array,thres):
 
 class orthoseg():
     def __init__(self,
-                    ortho_mask_path = 'ortho_mask.tif', 
+                    model = None,
+                    output_ortho_file = 'ortho_mask.tif', 
                     temp_folder     = 'temp',
                     sub_image_size  = 240, 
                     device          = 'cuda', 
@@ -105,10 +106,14 @@ class orthoseg():
         self.sub_img_dir    = os.path.join(temp_folder,'sub_img')
         self.sub_mask_dir   = os.path.join(temp_folder,'sub_masks')
         self.sub_img_list   = [] # array with the sub_image names 
-        self.path_to_save_ortho_mask = ortho_mask_path
-        # segmentation model
-        self.device = device 
-        self.model  = segnet.SegNet(num_classes=1,  n_init_features=3) # UNet has no dropout
+        self.path_to_save_ortho_mask = output_ortho_file
+
+        self.device = device
+        if model == None:
+            print("[ERROR] No Segmentation model available")
+            exit(-1)
+
+        self.model  = model
         
         self.thresh =  thresh # segmentation Treshold 
         # Device configuration
