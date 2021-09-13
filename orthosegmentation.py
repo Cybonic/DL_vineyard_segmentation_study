@@ -164,16 +164,9 @@ if __name__ == '__main__':
   #  root = "/home/tiago/BIG/dataset"
 
 
-  #input_ortho_file = os.path.join(root,path_to_file)
-  # ortho_dir = os.path.abspath(ortho_dir)
-
   if not os.path.isfile(input_ortho_file):
     print("[ERROR] File does not exist: %s"%(input_ortho_file))
     exit(0)
-
-  #path_to_ortho_img = os.path.join(ortho_dir,"ortho.tif")
-  # ortho_file = os.path.join(root,path)
-  # print("[INF] Path to ortho img: %s"%(path_to_ortho_img))
 
   ortho_pipeline = orthoseg.orthoseg( model  = model,
                                       device = device,
