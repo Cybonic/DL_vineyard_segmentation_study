@@ -10,3 +10,4 @@ torchaudio
 rioxarray
 progressbar2
 numpy
+tifffile
