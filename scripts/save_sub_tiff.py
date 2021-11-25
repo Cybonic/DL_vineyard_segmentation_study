@@ -122,10 +122,10 @@ if __name__=='__main__':
     # TEST_SAVE_SUB_IM()
     parser = argparse.ArgumentParser(description='Split and save sub tiff images')
     parser.add_argument('--source_file',
-                        default = '/home/tiago/greenai/dataset/QtaBaixo27Jul/MaskRGBQtaBaixoJul27.png',
+                        default = '/home/tiago/greenai/dataset/QtaBaixo27Jul/x7/OrthoRGBQtaBaixoJul27.tif',
                         help='')
     parser.add_argument('--dest_dir',
-                        default = "/home/tiago/greenai/dataset/QtaBaixo27Jul/SUB_MSK",
+                        default = "/home/tiago/greenai/dataset/QtaBaixo27Jul/x7/sub_imgs",
                         help='')
     parser.add_argument('--height',
                         default = 240,
