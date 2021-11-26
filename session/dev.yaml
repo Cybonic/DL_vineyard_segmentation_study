@@ -1,0 +1,51 @@
+
+device: 'cuda:0'
+name: 'dev'
+  
+
+dataset:
+  root: samples
+  name: RGBX7   
+  train: [qtabaixo]
+  test:  ['qtabaixo']
+  loader:
+    shuffle: False
+    batch_size: 1
+    workers: 1 
+  augment: False 
+
+# Model to be loaded
+network: 
+  model: 'segnet'
+  input_shape: [240,240]
+  drop_rate: 0.5
+  bands:
+    R: True
+    G: True
+    B: True
+    RE: False
+    NIR: False 
+    thermal: False
+  index:
+    NDVI: False
+  pretrained: 
+    use: False
+    path: 'checkpoints\t1\hd'
+    file: 'segnet_best'
+# training parameters
+max_epochs: 5
+report_val: 1
+# optimization parameters
+optimizer:
+  lr: 0.001
+  w_decay: 0
+  amsgrad: True
+  betas: [0.9, 0.99]
+  epsilon_w:  0.000000001 
+# Saving settings
+saver:
+  file: t1
+  result_dir: 'results'  
+  prediction_dir: 'prediction'
+
+  

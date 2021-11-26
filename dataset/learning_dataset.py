@@ -2,6 +2,7 @@ import os
 import sys 
 import pathlib
 from scipy import ndimage, misc
+from torch._C import ErrorReport
 
 dir_path = os.path.dirname(pathlib.Path(__file__).resolve().parent)
 # dir_path = os.path.dirname(os.path.realpath(__file__).parent)
@@ -21,6 +22,10 @@ import albumentations as A
 from  utils import data_utils
 from utils.vis_utils import vis
 from utils.data_utils import normalize
+import torch.utils.data as torch_utils
+import rioxarray
+from PIL import Image
+
 import cv2 
 
 MAX_ANGLE = 180
@@ -75,7 +80,32 @@ def split_data_plots(file_array):
     return(np.array(data_p_plots))
 
 
+def tiff2numpy(tiff):
+    return(np.array(tiff.values))
 
+
+def load_file(file):
+
+        if not os.path.isfile(file):
+            return(ErrorReport)
+        
+        file_type = file.split('.')[-1]
+
+        if file_type=='tiff':
+            raster = rioxarray.open_rasterio(file)
+            array = tiff2numpy(raster)
+
+        elif(file_type=='png'):
+            array = np.array(Image.open(file)).astype(np.uint8)
+        else:
+            array = np.load(file)
+
+        # Get the dim order right: C,H,W
+        if array.shape[-1]<array.shape[0]:
+            array = array.transpose(2,0,1)
+
+        name = file.split(os.sep)[-1].split('.')[0]
+        return(array,name)
 
 class augmentation():
     split_idx = 0
@@ -150,7 +180,6 @@ class greenAIDataStruct():
         return({'imgs':imgs,'masks':masks})
 
 
-
 class dataset_wrapper(greenAIDataStruct):
     def __init__(self, root,
                         vineyard_plot,sensor, 
@@ -174,50 +203,59 @@ class dataset_wrapper(greenAIDataStruct):
 
     def __getitem__(self,itr):
 
-        name = self.imgs[itr]
-        img = np.load(name)
-        path = name.split('\\')[4:6]
-        path.append('_'.join([key for key, value in self.bands_to_use.items() if value==True]))
-        path_name = '\\'.join(path) # only the name: first remove the path and then the '.npy' extention 
-        name = name.split('\\')[-1].split('.')[0]
+        file = self.imgs[itr]
+        print(file)
+        img,name = self.load_im(file)
        
-        bands = preprocessing(img, self.color_value)
-        
-        bands_idx = [band_to_indice[key] for key,value in self.bands_to_use.items() if value == True]
-        input_bands =  bands[:,:,bands_idx]
-
+        img = preprocessing(img, self.color_value)
         
         if  self.sensor != 'RGBX7' and any(self.agro_index.values())==True:
             # HD has no NIR and RE bands to compute NDVI
-            agro_indice = comp_agro_indices(bands,self.agro_index) 
+            agro_indice = comp_agro_indices(img,self.agro_index) 
             agro_indice = agro_indice.transpose(2,0,1)
             #agro_indice = torch.from_numpy(agro_indice).type(torch.FloatTensor)
         else:  
             agro_indice = np.array([])
 
-        mask = np.expand_dims(np.load(self.masks[itr]),axis=2)/255
+        mask,name = self.load_bin_mask(file)
+        
 
         if self.transform:
-            input_bands,mask,agro_indice = self.transform(input_bands,mask,agro_indice)
+            img,mask,agro_indice = self.transform(img,mask,agro_indice)
             
-        mask  = mask.transpose(2,0,1)
-        input_bands = input_bands.transpose(2,0,1)
+        #mask  = mask.transpose(2,0,1)
+        #input_bands = input_bands.transpose(2,0,1)
 
-        input_bands = torch.from_numpy(input_bands).type(torch.FloatTensor)
+        input_bands = torch.from_numpy(img).type(torch.FloatTensor)
         mask = torch.from_numpy(mask).type(torch.FloatTensor)
         agro_indice = torch.from_numpy(agro_indice).type(torch.FloatTensor)
         
-
-        mask[mask>0.5]  = 1 
-        mask[mask<=0.5] = 0
-
+        path_name = self.paths[0] 
+    
         batch = {'bands':input_bands,'mask':mask,'indices':agro_indice,'name':name,'path':path_name}
         # Convert to tensor
         return(batch)
     
     def __len__(self):
         return(len(self.imgs))
+    
+    def load_im(self,file):
 
+        array,name = load_file(file)
+        bands_idx = [band_to_indice[key] for key,value in self.bands_to_use.items() if value == True]
+        array =  array[bands_idx,:,:]
+        return(array,name)
+
+    def load_bin_mask(self,file):
+
+        array,name = load_file(file)
+        array = array[0,:,:]
+        mask = np.expand_dims(array,axis=0)/255
+        
+        mask[mask>0.5]  = 1 
+        mask[mask<=0.5] = 0
+
+        return(mask,name)
 
 class dataset_loader():
     def __init__(self,
@@ -251,19 +289,28 @@ class dataset_loader():
             raise NameError 
 
         for name in testset:
-            if not name in ['valdoeiro','esac1', 'esac2']:
+            if not name in ['valdoeiro','esac1', 'esac2','qtabaixo']:
                 raise NameError
         
         for name in trainset:
-            if not name in ['valdoeiro','esac1', 'esac2']:
+            if not name in ['valdoeiro','esac1', 'esac2','qtabaixo']:
                 raise NameError
 
         aug = None
         if augment == True:
             aug = augmentation()
 
-        self.test  = dataset_wrapper(root,testset, sensor,bands, agro_index,fraction = fraction['train'])
-        self.train = dataset_wrapper(root,trainset,sensor,bands, agro_index, transform = aug,fraction = fraction['test'])
+        # used only for debugging 
+        if len(testset) == len(trainset) and testset[0] == trainset[0]:
+            torch.manual_seed(0)
+            self.set  = dataset_wrapper(root,testset, sensor,bands, agro_index,fraction = fraction['train'])
+             # Train loader
+            train_size = int(0.80*len(self.set))
+            test_size = int(len(self.set)-train_size)
+            self.train, self.test = torch_utils.random_split(self.set, [train_size, test_size])
+        else:
+            self.test  = dataset_wrapper(root,testset, sensor,bands, agro_index,fraction = fraction['train'])
+            self.train = dataset_wrapper(root,trainset,sensor,bands, agro_index, transform = aug,fraction = fraction['test'])
 
         # Train loader
         self.tran_loader = DataLoader(  self.train,

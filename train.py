@@ -112,7 +112,7 @@ def dataset_loader_wrapper(session_settings):
   pc_name = platform.node()
   print("[INFO]: "+ pc_name)
   dataset = session_settings['dataset']
-  root =  dataset[pc_name] 
+  root =  dataset['root'] 
   sensor = dataset['name']
   param = dataset['loader']
   
@@ -210,7 +210,7 @@ if __name__ == '__main__':
       '--session', '-f',
       type=str,
       required=False,
-      default='ms/rgb',
+      default='dev',
       #default='unet_rgb_augment',
       help='Directory to get the trained model.'
   )
