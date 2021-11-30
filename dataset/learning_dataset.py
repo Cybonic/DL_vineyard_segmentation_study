@@ -31,6 +31,7 @@ import cv2
 MAX_ANGLE = 180
 band_to_indice = {'R':0,'G':1,'B':2,'RE':3,'NIR':4,'thermal':5}
 dataset_label_to_indice = {'esac1':'esac1','esac2':'esac2','valdo':'valdoeiro'}
+DATASET_NAMES = ['valdoeiro','esac','qtabaixo']
 
 def fetch_files(folder):
     dir = os.path.join(folder)
@@ -146,7 +147,6 @@ class greenAIDataStruct():
         for path in self.paths:
             path = os.path.join(path,folder)
             if not os.path.isdir(path):
-
                 raise NameError("Data folders do not Exist!: " + path)
 
             files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
@@ -206,13 +206,13 @@ class dataset_wrapper(greenAIDataStruct):
 
     def __getitem__(self,itr):
 
-        file = self.imgs[itr]
-        # print(file)
-        img,name = self.load_im(file)
+        img_file = self.imgs[itr]
+        #print(file)
+        img,name = self.load_im(img_file)
        
         img = preprocessing(img, self.color_value)
         
-        if  self.sensor != 'RGBX7' and any(self.agro_index.values())==True:
+        if  self.sensor != 'x7' and any(self.agro_index.values())==True:
             # HD has no NIR and RE bands to compute NDVI
             agro_indice = comp_agro_indices(img,self.agro_index) 
             agro_indice = agro_indice.transpose(2,0,1)
@@ -220,7 +220,8 @@ class dataset_wrapper(greenAIDataStruct):
         else:  
             agro_indice = np.array([])
 
-        mask,name = self.load_bin_mask(file)
+        mask_file = self.masks[itr]
+        mask,name = self.load_bin_mask(mask_file)
         
 
         if self.transform:
@@ -243,16 +244,17 @@ class dataset_wrapper(greenAIDataStruct):
         return(len(self.imgs))
     
     def load_im(self,file):
-
+        #print("Image: " + file)
         array,name = load_file(file)
         bands_idx = [band_to_indice[key] for key,value in self.bands_to_use.items() if value == True]
         array =  array[bands_idx,:,:]
         return(array,name)
 
     def load_bin_mask(self,file):
-
+        #print("Mask: " + file)
         array,name = load_file(file)
-        array = array[0,:,:]
+        if len(array.shape)>2:
+            array = array[0,:,:]
         mask = np.expand_dims(array,axis=0)/255
         
         mask[mask>0.5]  = 1 
@@ -282,57 +284,62 @@ class dataset_loader():
         self.debug = debug
         self.bands = bands
 
+        self.test_loader = None 
+        self.train_loader = None
+
         if debug == True:
             print("---"*10)
             print("[INF] DATASET_LOADER")
-            print("[INF] Dataset:",sensor) 
+            print("[INF] Sensor:",sensor)
+            print("[INF] Test Plot:",' '.join(testset))
+            print("[INF] Train Plot:",' '.join(trainset)) 
 
     
-        if not self.sensor in ['Multispectral','x7']:
+        if not self.sensor in ['altum','x7']:
             raise NameError 
-
-        for name in testset:
-            if not name in ['valdoeiro','esac1', 'esac2','qtabaixo']:
-                raise NameError
         
-        for name in trainset:
-            if not name in ['valdoeiro','esac1', 'esac2','qtabaixo']:
-                raise NameError
 
+        # Test set conditions
+
+        test_cond = [True for name in testset if name in DATASET_NAMES]
+
+        if test_cond:
+        
+            # test loader
+            self.test  = dataset_wrapper(root,testset, sensor,bands, agro_index,fraction = fraction['train'])
+
+            self.test_loader = DataLoader(  self.test,
+                                    batch_size = 1,
+                                    shuffle = False,
+                                    num_workers = self.workers,
+                                    pin_memory=False)
+
+
+        train_cond = [True for name in trainset if name in DATASET_NAMES]
+        
+        if train_cond:
+            self.train  = dataset_wrapper(root,testset, sensor,bands, agro_index,fraction = fraction['train'])
+            
+
+            # Train loader
+            self.train_loader = DataLoader(  self.train,
+                                        batch_size = self.batch_size,
+                                        shuffle = self.shuffle,
+                                        num_workers = self.workers,
+                                        pin_memory=False)
+        
         aug = None
         if augment == True:
             aug = augmentation()
 
-        # used only for debugging 
-        if len(testset) == len(trainset) and testset[0] == trainset[0]:
-            torch.manual_seed(0)
-            self.set  = dataset_wrapper(root,testset, sensor,bands, agro_index,fraction = fraction['train'])
-             # Train loader
-            train_size = int(0.80*len(self.set))
-            test_size = int(len(self.set)-train_size)
-            self.train, self.test = torch_utils.random_split(self.set, [train_size, test_size])
-        else:
-            self.test  = dataset_wrapper(root,testset, sensor,bands, agro_index,fraction = fraction['train'])
-            self.train = dataset_wrapper(root,trainset,sensor,bands, agro_index, transform = aug,fraction = fraction['test'])
-
-        # Train loader
-        self.tran_loader = DataLoader(  self.train,
-                                        batch_size = self.batch_size,
-                                        shuffle = self.shuffle,
-                                        num_workers = self.workers,
-                                        pin_memory=True)
-        
-        # test loader
-        self.test_loader = DataLoader(  self.test,
-                                batch_size = 1,
-                                shuffle = False,
-                                num_workers = self.workers,
-                                pin_memory=True)
 
         if debug == True:
+            if not self.train_loader == None:
+                print("[INF] Train: %d"%(len(self.train_loader)))
+            else:
+                print("[INF] Train:" + str(self.train_loader))
 
-            print("[INF] Train: %d"%(len(self.train)))
-            print("[INF] Test: %d"%(len(self.test)))
+            print("[INF] Test: %d"%(len(self.test_loader)))
             print("[INF] Batch Size: %d"%(self.batch_size))
             print("[INF] Shuffle: %d"%(self.shuffle))
             print("[INF] Workers: %d"%(self.workers))
@@ -341,7 +348,7 @@ class dataset_loader():
 
 
     def get_train_loader(self):
-        return(self.tran_loader)
+        return(self.train_loader)
     
     def get_test_loader(self):
         return(self.test_loader)

@@ -98,7 +98,7 @@ def network_wrapper(session_settings,pretrained_file= None):
 
 # ==================================================
 
-def dataset_loader_wrapper(session_settings):
+def dataset_loader_wrapper(root,session_settings):
   """
   dataset parser
 
@@ -112,7 +112,7 @@ def dataset_loader_wrapper(session_settings):
   pc_name = platform.node()
   print("[INFO]: "+ pc_name)
   dataset = session_settings['dataset']
-  root =  dataset['root'] 
+  # root =  dataset['root'] 
   sensor = dataset['name']
   param = dataset['loader']
   
@@ -199,6 +199,14 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser("./infer.py")
 
   parser.add_argument(
+      '--data_root', '-r',
+      type=str,
+      required=False,
+      default='/home/tiago/workspace/dataset/learning',
+      help='Directory to get the trained model.'
+  )
+
+  parser.add_argument(
       '--model', '-m',
       type=str,
       required=False,
@@ -227,7 +235,7 @@ if __name__ == '__main__':
       '--plot',
       type=int,
       required=False,
-      default=1,
+      default=0,
       help='Directory to get the trained model.'
   )
 
@@ -251,6 +259,7 @@ if __name__ == '__main__':
 
   plot_flag  = FLAGS.plot
   session    = FLAGS.session
+  root  = FLAGS.data_root
   
   session_file = os.path.join('session',session + '.yaml')
   if not os.path.isfile(session_file):
@@ -262,7 +271,7 @@ if __name__ == '__main__':
   model, pretrained_path, device = network_wrapper(session_settings)
   # Load dataset 
   # Get train and val loaders
-  train_loader, val_loader = dataset_loader_wrapper(session_settings)
+  train_loader, val_loader = dataset_loader_wrapper(root,session_settings)
   # Set the loss function
    
   optimizer, criterion = load_optimizer_wrapper(model,session_settings)
@@ -341,7 +350,7 @@ if __name__ == '__main__':
 
       if epoch % VAL_EPOCH == 0:
         # Compute valuation
-        metric = eval_net( model,val_loader, device,plot_flag) 
+        metric = eval_net(model,val_loader,device,plot_flag) 
         
         print("[INF] Mean f1 %0.2f global %0.2f  gt %0.2f pred %0.2f"%(metric['f1'],metric['ndvi_global'],metric['ndvi_gt'],metric['ndvi_pred']))
         # writer.add_scalar('f1/test', metric['f1'], epoch)

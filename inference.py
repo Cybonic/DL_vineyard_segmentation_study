@@ -137,12 +137,12 @@ def network_wrapper(session_settings,model = None ,pretrained_file= None):
   model.train()
   return(model, pretrained_path,device)
 
-def dataset_loader_wrapper(session_settings):
+def dataset_loader_wrapper(root,session_settings):
 
   pc_name = platform.node()
   print("[INFO]: "+ pc_name)
   dataset = session_settings['dataset']
-  root =  dataset[pc_name] 
+  #root =  dataset[pc_name] 
   sensor = dataset['name']
   param = dataset['loader']
 
@@ -153,7 +153,6 @@ def dataset_loader_wrapper(session_settings):
   bands =  session_settings['network']['bands']
   agro_index =  session_settings['network']['index']
 
-  trainset = dataset['train']
   testset  = dataset['test']
 
   augment = dataset['augment']
@@ -163,7 +162,7 @@ def dataset_loader_wrapper(session_settings):
                           bands = bands,
                           agro_index= agro_index,
                           augment = augment,
-                          trainset = trainset,
+                          trainset = [],
                           testset = testset,
                           batch_size = batch_size ,
                           shuffle = shuffle ,
@@ -171,8 +170,8 @@ def dataset_loader_wrapper(session_settings):
                           )
 
   test = dataset.get_test_loader()
-  train = dataset.get_train_loader()
-  return(train,test)
+  #train = dataset.get_train_loader()
+  return(test)
 
 def eval_net(model,loader,device,plot_flag=False,save_flag = False, save_path = 'fig'):
   '''
@@ -189,8 +188,11 @@ def eval_net(model,loader,device,plot_flag=False,save_flag = False, save_path = 
   - dictionary{iou,dice}
 
   '''
+
+  # print("[EVAL_NET] device: %s"%(device))
+  
   model.eval()
-  model = model.to(device)
+  #model = model.to(device)
 
   masks = []
   preds = []
@@ -199,7 +201,7 @@ def eval_net(model,loader,device,plot_flag=False,save_flag = False, save_path = 
   
   fig, ax1 = plt.subplots(1, 1)
   if plot_flag == True:
-    
+    print("[EVAL_NET] Plot flag is On, which may affect performance")
     plt.ion()
     plt.show()
 
@@ -313,6 +315,15 @@ def eval_net(model,loader,device,plot_flag=False,save_flag = False, save_path = 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser("./infer.py")
   parser.add_argument(
+      '--data_root', '-r',
+      type=str,
+      required=False,
+      #default='/home/tiago/workspace/dataset/learning',
+      default='samples',
+      help='Directory to get the trained model.'
+  )
+
+  parser.add_argument(
       '--dataset', '-d',
       type=str,
       default = "esac",
@@ -337,7 +348,7 @@ if __name__ == '__main__':
       '--session', '-f',
       type=str,
       required=False,
-      default='ms/nir',
+      default='hd/rgb',
       help='Directory to get the trained model.'
   )
 
@@ -362,7 +373,7 @@ if __name__ == '__main__':
       '--plot',
       type=int,
       required=False,
-      default=0,
+      default=1,
       help='Directory to get the trained model.'
   )
 
@@ -378,6 +389,9 @@ if __name__ == '__main__':
   
   session = FLAGS.session
   model_name = FLAGS.model
+  root = FLAGS.data_root
+  plot_flag = FLAGS.plot
+
   pretrained = None if FLAGS.pretrained == "" else FLAGS.pretrained
   
   session_file = os.path.join('session',session + '.yaml')
@@ -391,9 +405,9 @@ if __name__ == '__main__':
   network, pretrained_path, device = network_wrapper(session_settings,model= model_name, pretrained_file = pretrained)
   # Load dataset 
   # Get train and val loaders
-  train_loader, val_loader = dataset_loader_wrapper(session_settings)
+  val_loader = dataset_loader_wrapper(root,session_settings)
 
-  scores  = eval_net(network,val_loader,device,save_flag = True, save_path=os.path.join('fig',model_name))
+  scores  = eval_net(network,val_loader,device,plot_flag = plot_flag,save_flag = True, save_path=os.path.join('fig',model_name))
 
   print("[INF] Mean f1 %f"%(scores['f1']))
 
