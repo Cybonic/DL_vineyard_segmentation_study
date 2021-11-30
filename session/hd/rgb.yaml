@@ -3,15 +3,16 @@ device: 'cuda:0'
 name: 'hd_rbg'  
 # dataset ['esac1','esac2','valdo']
 dataset:
-  name: RGBX7 
-  root: '/home/tiago/remote_dataset/dataset/greenAI/learning/qtabaixo'
+  name: x7 
+  #root: '/home/tiago/remote_dataset/dataset/greenAI/learning/'
+  root: /home/tiago/big/dataset/greenAI/learning/
   #DESKTOP-5V7R599: 'D:\OneDrive - isr.uc.pt\Datasets\greenAI\learning'
-  train: ['esac1','esac2']
+  train: ['esac1','esac2',qtabaixo]
   test:  ['valdoeiro']
   loader:
     shuffle: False
-    batch_size: 1
-    workers: 1 
+    batch_size: 10
+    workers: 2
   augment: False  
 # Model to be loaded
 network: 

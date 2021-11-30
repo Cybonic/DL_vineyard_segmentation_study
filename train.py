@@ -210,7 +210,7 @@ if __name__ == '__main__':
       '--session', '-f',
       type=str,
       required=False,
-      default='dev',
+      default='hd/rgb',
       #default='unet_rgb_augment',
       help='Directory to get the trained model.'
   )

@@ -146,7 +146,9 @@ class greenAIDataStruct():
         for path in self.paths:
             path = os.path.join(path,folder)
             if not os.path.isdir(path):
-                raise NameError("Data folders do not Exist!")
+
+                raise NameError("Data folders do not Exist!: " + path)
+
             files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
             global_files = [os.path.join(path,f) for f in files]  
             image_array = np.append(image_array,files)
@@ -205,7 +207,7 @@ class dataset_wrapper(greenAIDataStruct):
     def __getitem__(self,itr):
 
         file = self.imgs[itr]
-        print(file)
+        # print(file)
         img,name = self.load_im(file)
        
         img = preprocessing(img, self.color_value)
@@ -286,7 +288,7 @@ class dataset_loader():
             print("[INF] Dataset:",sensor) 
 
     
-        if not self.sensor in ['Multispectral','RGBX7']:
+        if not self.sensor in ['Multispectral','x7']:
             raise NameError 
 
         for name in testset:
