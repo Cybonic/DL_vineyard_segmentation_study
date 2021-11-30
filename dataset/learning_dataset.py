@@ -144,6 +144,7 @@ class greenAIDataStruct():
     def fetch_files(self,folder):
         image_array = np.array([])
         global_img_array = np.array([])
+        
         for path in self.paths:
             path = os.path.join(path,folder)
             if not os.path.isdir(path):
@@ -244,14 +245,14 @@ class dataset_wrapper(greenAIDataStruct):
         return(len(self.imgs))
     
     def load_im(self,file):
-        #print("Image: " + file)
+        print("Image: " + file)
         array,name = load_file(file)
         bands_idx = [band_to_indice[key] for key,value in self.bands_to_use.items() if value == True]
         array =  array[bands_idx,:,:]
         return(array,name)
 
     def load_bin_mask(self,file):
-        #print("Mask: " + file)
+        print("Mask: " + file)
         array,name = load_file(file)
         if len(array.shape)>2:
             array = array[0,:,:]

@@ -318,8 +318,8 @@ if __name__ == '__main__':
       '--data_root', '-r',
       type=str,
       required=False,
-      #default='/home/tiago/workspace/dataset/learning',
-      default='samples',
+      default='/home/tiago/workspace/dataset/learning',
+      #default='/home/tiago/desktop_home/workspace/dataset/learning/valdoeiro/',
       help='Directory to get the trained model.'
   )
 
