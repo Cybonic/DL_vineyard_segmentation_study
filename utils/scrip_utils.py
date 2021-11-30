@@ -35,7 +35,7 @@ def run_script(**arg):
     # Convert arguments to str line
     train_arg = ' '.join(train_arg_list)
     # Build Full terminal command 
-    terminal_cmd_list = ['python.exe','-W','ignore' , cmd, train_arg]
+    terminal_cmd_list = ['python3','-W','ignore' , cmd, train_arg]
     terminal_cmd      = ' '.join(terminal_cmd_list)
     
     print("\n\n======================================================")

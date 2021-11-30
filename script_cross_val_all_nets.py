@@ -7,14 +7,19 @@ import platform
 
 
 
-TRAIN = {'t1':['esac1','esac2'],
-         't2':['esac1','valdoeiro'],
-         't3':['valdoeiro','esac2']
+#TRAIN = {'t1':['esac1','esac2'],
+#         't2':['esac1','valdoeiro'],
+#         't3':['valdoeiro','esac2']
+#        }
+
+TRAIN = {'t1':['esac','valdoeiro'],
+         't2':['qtabaixo','valdoeiro'],
+         't3':['qtabaixo','esac']
         }
 
-TEST = {'t1':['valdoeiro'],
-        't2':['esac2'],
-        't3':['esac1']
+TEST = {'t1':['qtabaixo'],
+        't2':['esac'],
+        't3':['valdoeiro']
         }
 
 ms_files = [
@@ -40,8 +45,8 @@ hd_files = 'rgb'
 LR = {'segnet':0.000171,'unet_bn':0.0001,'modsegnet':0.00011029}
 WD = {'segnet':0.000061268,'unet_bn':0.00004,'modsegnet':0.0006758}
 
-EXEC_FILE = 'train_splited_dataset.py'
-CMD = 'python.exe'
+EXEC_FILE = 'train.py'
+CMD = 'python3'
 PLOT_FLAG = 0
 
 TEST_PARAMETERS = {
@@ -116,7 +121,8 @@ if __name__ == '__main__':
     pc_name = platform.node()
     print("[INFO][SCRIPT] "+ pc_name)
 
-    if pc_name == 'DESKTOP-SSEDT6V': # Laptop (Testing)
+
+    if pc_name == 'tiago-lp': # Laptop (Testing)
         parameters = TEST_PARAMETERS
         print("[INFO][SCRIPT] LOADING Test Paramters")
     else: #pc_name == 'DESKTOP-5V7R599': # Desktop (deploy)
@@ -130,14 +136,14 @@ if __name__ == '__main__':
         print("[INFO][SCRIPT] Cycle: %d"%(cnt))
         for network in networks:    
             for t in tx:
-                ms_session_root = 'ms'
+                #ms_session_root = 'ms'
                 
-                for file in ms_files:
-                    print("[INFO][SCRIPT] File: " + file)
-                    org_session = os.path.join(ms_session_root,file)
-                    session = UpdateSession(org_session, cross_val = t, network = network, **parameters) 
-                    run_script(session = session, cmd = EXEC_FILE,plot = PLOT_FLAG)
-
+                #for file in ms_files:
+                #    print("[INFO][SCRIPT] File: " + file)
+                #    org_session = os.path.join(ms_session_root,file)
+                #    session = UpdateSession(org_session, cross_val = t, network = network, **parameters) 
+                #    run_script(session = session, cmd = EXEC_FILE,plot = PLOT_FLAG)
+                print("[SCRIPT] Test: " + t)
                 hd_session_root = 'hd'
                 org_session = os.path.join(hd_session_root,hd_files)
                 session = UpdateSession(org_session, cross_val = t, network = network, **parameters) 
