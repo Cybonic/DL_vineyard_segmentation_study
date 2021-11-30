@@ -87,27 +87,28 @@ def tiff2numpy(tiff):
 
 def load_file(file):
 
-        if not os.path.isfile(file):
-            return(ErrorReport)
-        
-        file_type = file.split('.')[-1]
+    if not os.path.isfile(file):
+        return(ErrorReport)
+    
+    file_type = file.split('.')[-1]
 
-        if file_type=='tiff':
-            #raster = rioxarray.open_rasterio(file)
-            array = np.array(Image.open(file)).astype(np.uint8)
-            # array = tiff2numpy(raster)
+    if file_type=='tiff':
+        #raster = rioxarray.open_rasterio(file)
+        array = np.array(Image.open(file)).astype(np.uint8)
+        # array = tiff2numpy(raster)
 
-        elif(file_type=='png'):
-            array = np.array(Image.open(file)).astype(np.uint8)
-        else:
-            array = np.load(file)
+    elif(file_type=='png'):
+        array = np.array(Image.open(file)).astype(np.uint8)
+    else:
+        array = np.load(file)
 
-        # Get the dim order right: C,H,W
-        if array.shape[-1]<array.shape[0]:
-            array = array.transpose(2,0,1)
+    # Get the dim order right: C,H,W
+    if array.shape[-1]<array.shape[0]:
+        array = array.transpose(2,0,1)
 
-        name = file.split(os.sep)[-1].split('.')[0]
-        return(array,name)
+    name = file.split(os.sep)[-1].split('.')[0]
+    return(array,name)
+
 
 class augmentation():
     split_idx = 0

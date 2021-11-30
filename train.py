@@ -202,7 +202,8 @@ if __name__ == '__main__':
       '--data_root', '-r',
       type=str,
       required=False,
-      default='/home/tiago/workspace/dataset/learning',
+      #default='/home/tiago/workspace/dataset/learning',
+      default='samples',
       help='Directory to get the trained model.'
   )
 
@@ -235,7 +236,7 @@ if __name__ == '__main__':
       '--plot',
       type=int,
       required=False,
-      default=0,
+      default=1,
       help='Directory to get the trained model.'
   )
 
