@@ -92,8 +92,9 @@ def load_file(file):
         file_type = file.split('.')[-1]
 
         if file_type=='tiff':
-            raster = rioxarray.open_rasterio(file)
-            array = tiff2numpy(raster)
+            #raster = rioxarray.open_rasterio(file)
+            array = np.array(Image.open(file)).astype(np.uint8)
+            # array = tiff2numpy(raster)
 
         elif(file_type=='png'):
             array = np.array(Image.open(file)).astype(np.uint8)

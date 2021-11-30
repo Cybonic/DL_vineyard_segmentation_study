@@ -4,8 +4,8 @@ name: 'hd_rbg'
 # dataset ['esac1','esac2','valdo']
 dataset:
   name: RGBX7 
-  DESKTOP-SSEDT6V: 'E:\Dataset\greenAI\learning'
-  DESKTOP-5V7R599: 'D:\OneDrive - isr.uc.pt\Datasets\greenAI\learning'
+  root: '/home/tiago/remote_dataset/dataset/greenAI/learning/qtabaixo'
+  #DESKTOP-5V7R599: 'D:\OneDrive - isr.uc.pt\Datasets\greenAI\learning'
   train: ['esac1','esac2']
   test:  ['valdoeiro']
   loader:
