@@ -64,7 +64,7 @@ if __name__ == '__main__':
   sensor = 'x7'
   bands = ['R','G','B']
   augment = False
-  set = ['esac','valdoeiro','qtabaixo']
+  set = ['qtabaixo']
 
   dataset= dataset_wrapper(
                         root,
