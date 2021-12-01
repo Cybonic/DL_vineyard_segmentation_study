@@ -18,6 +18,8 @@ import tqdm
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import signal, sys
 import numpy as np
+from torch.utils import tensorboard
+from PIL import Image
 # from utils import train_utils as loss
 np.seterr(divide='ignore', invalid='ignore')
 # from torch.utils.tensorboard import SummaryWriter
@@ -195,6 +197,9 @@ def load_optimizer_wrapper(model,parameters):
   # ============================================================================= 
 
 
+
+
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser("./infer.py")
 
@@ -241,6 +246,14 @@ if __name__ == '__main__':
   )
 
   parser.add_argument(
+      '--writer',
+      type=str,
+      required=False,
+      default='hd_segnet',
+      help='Directory to get the trained model.'
+  )
+
+  parser.add_argument(
       '--results',
       type=str,
       required=False,
@@ -261,6 +274,7 @@ if __name__ == '__main__':
   plot_flag  = FLAGS.plot
   session    = FLAGS.session
   root  = FLAGS.data_root
+  writer_name = FLAGS.writer
   
   session_file = os.path.join('session',session + '.yaml')
   if not os.path.isfile(session_file):
@@ -281,8 +295,11 @@ if __name__ == '__main__':
   # Saving settings
   saveing_param = session_settings['saver']  
   saver_handler = saver(**session_settings['saver'])
+  writer_name = os.path.join(saveing_param['result_dir'],writer_name)
+  
+  #os.makedirs('log')
 
-  #writer = SummaryWriter(log_dir='log',comment = saver_handler.get_result_file() )
+  tf_writer = writer(writer_name)
 
   epochs    = session_settings['max_epochs']
   VAL_EPOCH = session_settings['report_val']
@@ -345,6 +362,15 @@ if __name__ == '__main__':
       scores = evaluation(Y,PREDS)
 
       train_loss = running_loss/len(train_loader)
+      
+      tf_writer.add_loss(train_loss,epoch)
+      
+      frame = build_frame(img,mask,pred_mask)
+      tf_writer.add_image(frame)
+
+      tf_writer.add_f1(train_loss,scores['f1'],epoch)
+
+
       #writer.add_scalar('Loss/train', train_loss, epoch)
       print("train epoch : {}/{}, loss: {:.6f} f1: {:.3f}".format(epoch, epochs, train_loss,scores['f1']))
       
