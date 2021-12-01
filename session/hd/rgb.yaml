@@ -7,13 +7,13 @@ dataset:
   #root: '/home/tiago/remote_dataset/dataset/greenAI/learning/'
   root: /home/tiago/big/dataset/greenAI/learning/
   #DESKTOP-5V7R599: 'D:\OneDrive - isr.uc.pt\Datasets\greenAI\learning'
-  train: ['esac']
-  test:  ['valdoeiro']
+  train: ['qtabaixo']
+  test:  ['qtabaixo']
   #train: ['esac1','esac2']
   #test:  [qtabaixo,'valdoeiro']
   loader:
     shuffle: False
-    batch_size: 10
+    batch_size: 2
     workers: 0
   augment: False  
 # Model to be loaded
