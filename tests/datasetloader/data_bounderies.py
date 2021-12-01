@@ -18,7 +18,7 @@ def generate_bounderies(max,min):
   return({'img':np.array([min,max]),'mask':np.array([min,max])})
 
 
-def get_edge_values(torch_array) -> dict:
+def get_bound_values(torch_array) -> dict:
   return({'min': torch.min(torch_array).item() ,'max':torch.max(torch_array).item()})
 
 def get_data_bounderies(dataset):
@@ -30,8 +30,8 @@ def get_data_bounderies(dataset):
     img = sample['bands']
     mask = sample['mask']
 
-    edge_img_values = get_edge_values(img)
-    mask_edge_values = get_edge_values(mask)
+    edge_img_values = get_bound_values(img)
+    mask_edge_values = get_bound_values(mask)
     edge_array_img.append([edge_img_values['min'],edge_img_values['max']])
     edge_array_mask.append([mask_edge_values['min'],mask_edge_values['max']])
 
