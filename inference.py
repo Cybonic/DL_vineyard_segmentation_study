@@ -37,6 +37,7 @@ from sklearn.metrics import f1_score, precision_score, recall_score
 from utils.vis_utils import vis
 import platform
 import matplotlib.pyplot as plt
+from utils import tf_writer
 
 
 
@@ -173,7 +174,7 @@ def dataset_loader_wrapper(root,session_settings):
   #train = dataset.get_train_loader()
   return(test)
 
-def eval_net(model,loader,device,plot_flag=False,save_flag = False, save_path = 'fig'):
+def eval_net(model,loader,device,criterion,writer,epoch,save_flag = False):
   '''
   Network Evaluation 
 
@@ -197,18 +198,13 @@ def eval_net(model,loader,device,plot_flag=False,save_flag = False, save_path = 
   masks = []
   preds = []
   
-  save_image_root = save_path
   
-  fig, ax1 = plt.subplots(1, 1)
-  if plot_flag == True:
-    print("[EVAL_NET] Plot flag is On, which may affect performance")
-    plt.ion()
-    plt.show()
 
   ndvi_array = {'global':[],'pred':[],'gt':[]}
 
   masks = []
   preds = []
+  running_loss = 0
 
   for batch in tqdm.tqdm(loader,'Validation'):
 
@@ -225,88 +221,33 @@ def eval_net(model,loader,device,plot_flag=False,save_flag = False, save_path = 
     ndvi[np.isnan(ndvi)]=0
 
     pred_mask = model(img)
+    loss_torch = criterion(pred_mask,mask.to(device))
     # transform logit to label  
     pred_mask = logit2label(pred_mask,0.5)
     
-    if ndvi.size > 0:
-      gt_ndvi = ndvi.copy()
-      gt_ndvi[msk==0] = 0
+    loss = loss_torch.detach().item()
+    running_loss += loss
+    if torch.isnan(loss_torch):
+      print("[WARN] WARNING NAN")
 
-      pred_ndvi = ndvi.copy()
-      pred_ndvi[pred_mask==0] = 0
-
-      # ndvi
-      ndvi_array['global'].append(np.mean(ndvi))
-      ndvi_array['gt'].append(np.mean(gt_ndvi))
-      ndvi_array['pred'].append(np.mean(pred_ndvi))
   
     masks.append(msk.flatten())
     preds.append(pred_mask.flatten())
     
-    #  # Convert array to image for visualization and storing
-    
-    img = img.cpu().detach().numpy()
-    
-    if img.shape[1]==1: # single band
-       img =  np.stack((img,img,img)).squeeze().transpose(1,2,0)
-    elif img.shape[1]>3 or img.shape[1]==2: # single band
-      img = img[0,:,:]
-      img =  np.stack((img,img,img)).squeeze().transpose(1,2,0)
-    else:
-      img = img.squeeze().transpose(1,2,0)
-    
-    
-    msk =  np.stack((msk,msk,msk)).squeeze().transpose(1,2,0)
-    pred_mask_3d  = np.stack((pred_mask,pred_mask,pred_mask)).squeeze().transpose(1,2,0)
-
-    if ndvi.size>0:
-      pred_ndvi_3d  = np.stack((pred_ndvi,pred_ndvi,pred_ndvi)).squeeze().transpose(1,2,0)
-      gt_ndvi_3d    = np.stack((gt_ndvi,gt_ndvi,gt_ndvi)).squeeze().transpose(1,2,0)
-      ndvi_3d       = np.stack((ndvi,ndvi,ndvi)).squeeze().transpose(1,2,0)
-      vis_img = np.hstack((img,msk,ndvi_3d,gt_ndvi_3d,pred_ndvi_3d,pred_mask_3d))
-    else: 
-      vis_img = np.hstack((img,msk,pred_mask_3d))
-
-    vis_img = (vis_img * 255).astype(np.uint8)
-
-    ax1.imshow(vis_img)
-    
-    if plot_flag == True:
-      plt.draw()
-      plt.pause(10)
-
-    # Saving images to folder
-    if save_flag:
-      save_image_path = os.path.join(save_image_root,path)
-      if not os.path.isdir(save_image_path):
-        os.makedirs(save_image_path)
-      image_full_name = os.path.join(save_image_path,name)
-      plt.savefig(image_full_name)
-
-      
-  if plot_flag == True:
-    plt.close()
+    #  # Convert array to image for visualization and storin
 
   Y = np.concatenate(masks, axis=None)
   PREDS = np.concatenate(preds, axis=None)
 
   scores = evaluation(Y,PREDS)
 
-  
-  if ndvi.size > 0:
+  val_loss = running_loss/len(loader)
+  scores['loss'] = val_loss
 
-    ndvi_global = float(round(np.mean(ndvi_array['global']),4))
-    ndvi_gt     = float(round(np.mean(ndvi_array['gt']),4))
-    ndvi_pred   = float(round(np.mean(ndvi_array['pred']),4))
-  else:
-    ndvi_global = -1
-    ndvi_gt     = -1
-    ndvi_pred   = -1
-    
-
-  scores['ndvi_global'] = ndvi_global
-  scores['ndvi_gt']     = ndvi_gt
-  scores['ndvi_pred']   = ndvi_pred
+  tb_frame = tf_writer.build_tb_frame(img,mask,pred_mask)
+  writer.add_image(tb_frame,epoch,'val')
+  writer.add_f1(scores['f1'],epoch,'val')
+  writer.add_loss(val_loss,epoch,'val')
   
   return(scores)
 

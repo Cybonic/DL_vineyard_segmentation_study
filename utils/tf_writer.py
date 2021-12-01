@@ -20,9 +20,10 @@ restore_transform = transforms.Compose([
             transforms.ToPILImage()])
 
 def build_tb_frame(img,mask,pred):
-    
-    mask = mask.data.cpu().numpy()
-    pred = pred.data.cpu().numpy()
+    if not isinstance(mask,np.ndarray):
+      mask = mask.data.cpu().numpy()
+    if not isinstance(pred,np.ndarray):
+      pred = pred.data.cpu().numpy()
 
     val_visual = [[i.data.cpu(), j, k] for i, j, k in zip(img, mask, pred)]
     val_img = []
@@ -45,17 +46,19 @@ class writer():
     self.wrt_step = 0
     self.mode = mode
 
-  def _add_scalar(self,metric,value,step,mode='train'):
+  def _add_scalar(self,metric,value,step,mode):
     if not mode in self.mode:
       raise NameError(mode)
     self.writer.add_scalar(f'{mode}/{metric}', value, step)
 
   def add_loss(self,value,step,mode):
-    self._add_scalar(self,'loss',value,step,mode=mode)
+    self._add_scalar('loss',value,step,mode=mode)
   
   def add_f1(self,value,step,mode='train'):
-    self._add_scalar(self,'f1',value,step,mode=mode)
+    self._add_scalar('f1',value,step,mode=mode)
   
   def add_image(self,img_frame,step,mode='train'):
     # build frame
-    self.writer.add_image(f'{self.mode}/inputs_targets_predictions', img_frame, step)
+    if not mode in self.mode:
+      raise NameError(mode)
+    self.writer.add_image(f'{mode}/inputs_targets_predictions', img_frame, step)

@@ -65,7 +65,7 @@ def get_data_from_dataset(dataset):
 
 
 
-def test_tf_writer_on_dataset(writer,dataset)-> bool:
+def test_tf_writer_on_dataset(writer,dataset,mode)-> bool:
 
     images = get_data_from_dataset(dataset)
 
@@ -75,11 +75,11 @@ def test_tf_writer_on_dataset(writer,dataset)-> bool:
 
     for e,(i,m,p) in tqdm(enumerate(zip(imgs,masks,pred))):
       tb_frame = tf_writer.build_tb_frame(i,m,p)
-      writer.add_image(tb_frame,e,'train')
+      writer.add_image(tb_frame,e,mode)
 
 
 
-def test_tf_writer_on_synthetic_data(writer,images,signals)-> bool:
+def test_tf_writer_on_synthetic_data(writer,images,signals,mode)-> bool:
 
    
     imgs = images['imgs']
@@ -92,11 +92,11 @@ def test_tf_writer_on_synthetic_data(writer,images,signals)-> bool:
 
     for i,m,p,e in zip(imgs,masks,pred,epoch):
       tb_frame = tf_writer.build_tb_frame(i,m,p)
-      writer.add_image(tb_frame,e)
+      writer.add_image(tb_frame,e,mode)
 
-    for i,m,p,e in zip(loss,f1,epoch):
-      writer.add_f1(f1,e)
-      writer.add_loss(loss,e)
+    for l,f,e in zip(loss,f1,epoch):
+      writer.add_f1(f,e,mode)
+      writer.add_loss(l,e,mode)
 
 
 
@@ -109,9 +109,12 @@ if __name__ == '__main__':
 
     images,signals = synthetic_data_generator()
     
-    writer = tf_writer.writer(os.path.join('results',name))
+    writer = tf_writer.writer(os.path.join('results',name),mode=['train','val','dataset'])
 
-    
+    test_tf_writer_on_synthetic_data(writer,images,signals,'train')
+    test_tf_writer_on_synthetic_data(writer,images,signals,'val')
+
+
     root = '/home/tiago/desktop_home/workspace/dataset/learning'
     sensor = 'x7'
     bands = ['R','G','B']
@@ -134,4 +137,4 @@ if __name__ == '__main__':
                                     num_workers = 0,
                                     pin_memory=False)
 
-    test_tf_writer_on_dataset(writer,dataset_loader)
+    test_tf_writer_on_dataset(writer,dataset_loader,'dataset')

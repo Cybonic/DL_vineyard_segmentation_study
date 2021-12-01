@@ -20,6 +20,7 @@ import signal, sys
 import numpy as np
 from torch.utils import tensorboard
 from PIL import Image
+from utils import tf_writer
 # from utils import train_utils as loss
 np.seterr(divide='ignore', invalid='ignore')
 # from torch.utils.tensorboard import SummaryWriter
@@ -207,8 +208,8 @@ if __name__ == '__main__':
       '--data_root', '-r',
       type=str,
       required=False,
-      #default='/home/tiago/workspace/dataset/learning',
-      default='samples',
+      default='/home/tiago/workspace/dataset/learning',
+      #default='samples',
       help='Directory to get the trained model.'
   )
 
@@ -295,11 +296,11 @@ if __name__ == '__main__':
   # Saving settings
   saveing_param = session_settings['saver']  
   saver_handler = saver(**session_settings['saver'])
-  writer_name = os.path.join(saveing_param['result_dir'],writer_name)
+  writer_name = os.path.join('saved',writer_name)
   
   #os.makedirs('log')
 
-  tf_writer = writer(writer_name)
+  writer = tf_writer.writer(writer_name,mode= ['train','val'])
 
   epochs    = session_settings['max_epochs']
   VAL_EPOCH = session_settings['report_val']
@@ -312,6 +313,7 @@ if __name__ == '__main__':
   print("[INF] Device: " + device)
   print("[INF] Result File: " + saver_handler.get_result_file())
   print("[INF] Session: " + session_name)
+  print("[INF] Writer: " + writer_name)
   print("--------------------------------------------------------\n")
 
   
@@ -363,12 +365,12 @@ if __name__ == '__main__':
 
       train_loss = running_loss/len(train_loader)
       
-      tf_writer.add_loss(train_loss,epoch)
+      writer.add_loss(train_loss,epoch,'train')
       
-      frame = build_frame(img,mask,pred_mask)
-      tf_writer.add_image(frame)
-
-      tf_writer.add_f1(train_loss,scores['f1'],epoch)
+      tb_frame = tf_writer.build_tb_frame(img,mask,pred_mask)
+     
+      writer.add_image(tb_frame,epoch,'train')
+      writer.add_f1(scores['f1'],epoch,'train')
 
 
       #writer.add_scalar('Loss/train', train_loss, epoch)
@@ -377,9 +379,10 @@ if __name__ == '__main__':
 
       if epoch % VAL_EPOCH == 0:
         # Compute valuation
-        metric = eval_net(model,val_loader,device,plot_flag) 
-        
-        print("[INF] Mean f1 %0.2f global %0.2f  gt %0.2f pred %0.2f"%(metric['f1'],metric['ndvi_global'],metric['ndvi_gt'],metric['ndvi_pred']))
+        metric = eval_net(model,val_loader,device,criterion,writer,epoch) 
+  
+
+        print("[INF] Mean Loss %0.2f Mean f1 %0.2f"%(metric['f1'],metric['loss']))
         # writer.add_scalar('f1/test', metric['f1'], epoch)
         if metric['f1'] > global_val_score['f1']:
           # Overwite
