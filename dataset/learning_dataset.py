@@ -321,8 +321,6 @@ class dataset_loader():
         
         if train_cond:
             self.train  = dataset_wrapper(root,testset, sensor,bands, agro_index,fraction = fraction['train'])
-            
-
             # Train loader
             self.train_loader = DataLoader(  self.train,
                                         batch_size = self.batch_size,
