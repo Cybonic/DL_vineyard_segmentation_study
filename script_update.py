@@ -32,7 +32,10 @@ def update_changed_files(dest_dir):
     
     for file in changed_files:
         destination = os.path.join(dest_dir,file)
-        shutil.copy(file, destination)
+        try:
+            shutil.copy(file, destination)
+        except:
+            print("[Error] File not copied: " + destination )
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("./infer.py")

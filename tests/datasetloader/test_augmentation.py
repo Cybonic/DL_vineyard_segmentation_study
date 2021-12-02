@@ -16,7 +16,7 @@ package_root  = os.path.dirname(pathlib.Path(__file__).parent.parent.absolute())
 sys.path.append(package_root)
 
 from utils import tf_writer
-from dataset.learning_dataset import dataset_wrapper
+from dataset.learning_dataset import dataset_wrapper,augmentation
 
 HEIGHT = 240
 WIDTH = 240
@@ -120,6 +120,7 @@ if __name__ == '__main__':
     bands = ['R','G','B']
     augment = False
     set = [DATASET]
+    aug = augmentation()
 
     dataset= dataset_wrapper(
                           root,
@@ -127,9 +128,9 @@ if __name__ == '__main__':
                           sensor, 
                           bands = {'R':True,'G':True,'B':True}, 
                           agro_index = {'NDVI':False}, 
-                          transform = None, 
+                          transform = aug, 
                           path_type='global',
-                          fraction = None)
+                          fraction = 0.1)
     
     dataset_loader = DataLoader( dataset,
                                     batch_size = BATCH_SIZE,

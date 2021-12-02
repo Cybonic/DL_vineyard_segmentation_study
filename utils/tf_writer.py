@@ -6,6 +6,7 @@ from PIL import Image
 import torch
 import torchvision
 from torchvision import transforms
+import torch
 
 
 def mask_array2PIL(array):
@@ -16,14 +17,20 @@ def mask_array2PIL(array):
 
 viz_transform = transforms.Compose([
             transforms.ToTensor()])
+
 restore_transform = transforms.Compose([
             transforms.ToPILImage()])
 
 def build_tb_frame(img,mask,pred):
+
     if not isinstance(mask,np.ndarray):
       mask = mask.data.cpu().numpy()
     if not isinstance(pred,np.ndarray):
       pred = pred.data.cpu().numpy()
+
+    #print(img.shape)
+    #print(mask.shape)
+    #print(pred.shape)
 
     val_visual = [[i.data.cpu(), j, k] for i, j, k in zip(img, mask, pred)]
     val_img = []

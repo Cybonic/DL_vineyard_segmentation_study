@@ -25,6 +25,7 @@ from utils.data_utils import normalize
 import torch.utils.data as torch_utils
 import rioxarray
 from PIL import Image
+from torchvision import transforms
 
 import cv2 
 
@@ -53,17 +54,26 @@ def comp_agro_indices(bands, indices_to_compute):
         indices = ndvi 
     return(ndvi)
 
-def preprocessing(img,values):
-   
-    img = img.transpose(2,0,1)
-    nrom_bands = []
-    for i,C in enumerate(img):
-        C = data_utils.normalize(C)
 
-        nrom_bands.append(C)
-    nrom_bands = tuple(nrom_bands)
-    nrom_bands = np.stack(nrom_bands)
-    nrom_bands = nrom_bands.transpose(1,2,0)    
+def preprocessing(img,mean=0,std=1):
+   
+
+    transform_norm = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean, std)
+    ])
+
+    nrom_bands = transform_norm(img)
+
+    #img = img.transpose(2,0,1)
+    #nrom_bands = []
+    #for i,C in enumerate(img):
+    #    C = data_utils.normalize(C)
+
+    #    nrom_bands.append(C)
+    #nrom_bands = tuple(nrom_bands)
+    #nrom_bands = np.stack(nrom_bands)
+    #nrom_bands = nrom_bands.transpose(1,2,0)    
  
     return(nrom_bands)
 
@@ -87,6 +97,7 @@ def tiff2numpy(tiff):
 
 def load_file(file):
 
+
     if not os.path.isfile(file):
         return(ErrorReport)
     
@@ -103,8 +114,9 @@ def load_file(file):
         array = np.load(file)
 
     # Get the dim order right: C,H,W
-    if array.shape[-1]<array.shape[0]:
-        array = array.transpose(2,0,1)
+    if array.shape[-1]>array.shape[0]:
+        array = array.transpose(1,2,0)
+
 
     name = file.split(os.sep)[-1].split('.')[0]
     return(array,name)
@@ -210,17 +222,11 @@ class dataset_wrapper(greenAIDataStruct):
 
         img_file = self.imgs[itr]
         #print(file)
-        imgs,name = self.load_im(img_file)
+        img,name = self.load_im(img_file)
        
-        img = preprocessing(imgs, self.color_value)
+        img = preprocessing(img, self.color_value)
         
-        if  self.sensor != 'x7' and any(self.agro_index.values())==True:
-            # HD has no NIR and RE bands to compute NDVI
-            agro_indice = comp_agro_indices(img,self.agro_index) 
-            agro_indice = agro_indice.transpose(2,0,1)
-            #agro_indice = torch.from_numpy(agro_indice).type(torch.FloatTensor)
-        else:  
-            agro_indice = np.array([])
+        agro_indice = np.array([])
 
         mask_file = self.masks[itr]
         mask,name = self.load_bin_mask(mask_file)
@@ -232,13 +238,13 @@ class dataset_wrapper(greenAIDataStruct):
         #mask  = mask.transpose(2,0,1)
         #input_bands = input_bands.transpose(2,0,1)
 
-        input_bands = torch.from_numpy(img).type(torch.FloatTensor)
+        #input_bands = torch.from_numpy(img).type(torch.FloatTensor)
         mask = torch.from_numpy(mask).type(torch.FloatTensor)
         agro_indice = torch.from_numpy(agro_indice).type(torch.FloatTensor)
         
         path_name = self.paths[0] 
     
-        batch = {'bands':input_bands,'mask':mask,'indices':agro_indice,'name':name,'path':path_name}
+        batch = {'bands':img,'mask':mask,'indices':agro_indice,'name':name,'path':path_name}
         # Convert to tensor
         return(batch)
     
@@ -249,14 +255,15 @@ class dataset_wrapper(greenAIDataStruct):
         #print("Image: " + file)
         array,name = load_file(file)
         bands_idx = [band_to_indice[key] for key,value in self.bands_to_use.items() if value == True]
-        array =  array[bands_idx,:,:]
+        array =  array[:,:,bands_idx]
+        
         return(array,name)
 
     def load_bin_mask(self,file):
         #print("Mask: " + file)
         array,name = load_file(file)
         if len(array.shape)>2:
-            array = array[0,:,:]
+            array = array[:,:,0]
         mask = np.expand_dims(array,axis=0)/255
         
         mask[mask>0.5]  = 1 
@@ -298,9 +305,12 @@ class dataset_loader():
 
     
         if not self.sensor in ['altum','x7']:
-            raise NameError 
+            raise NameError("Sensor name is not valid: " + self.sensor) 
         
 
+        aug = None
+        if augment == True:
+            aug = augmentation()
         # Test set conditions
 
         test_cond = [True for name in testset if name in DATASET_NAMES]
@@ -308,7 +318,7 @@ class dataset_loader():
         if test_cond:
         
             # test loader
-            self.test  = dataset_wrapper(root,testset, sensor,bands, agro_index,fraction = fraction['train'])
+            self.test  = dataset_wrapper(root,testset, sensor,bands,fraction = fraction['train'])
 
             self.test_loader = DataLoader(  self.test,
                                     batch_size = 1,
@@ -320,7 +330,7 @@ class dataset_loader():
         train_cond = [True for name in trainset if name in DATASET_NAMES]
         
         if train_cond:
-            self.train  = dataset_wrapper(root,trainset, sensor,bands, agro_index,fraction = fraction['train'])
+            self.train  = dataset_wrapper(root,trainset, sensor,bands, augment = aug,fraction = fraction['train'])
             # Train loader
             self.train_loader = DataLoader(  self.train,
                                         batch_size = self.batch_size,
@@ -328,9 +338,7 @@ class dataset_loader():
                                         num_workers = self.workers,
                                         pin_memory=False)
         
-        aug = None
-        if augment == True:
-            aug = augmentation()
+
 
 
         if debug == True:

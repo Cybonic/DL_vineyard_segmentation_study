@@ -225,8 +225,8 @@ if __name__ == '__main__':
       '--session', '-f',
       type=str,
       required=False,
-      default='hd/rgb',
-      #default='unet_rgb_augment',
+      #default='hd/rgb',
+      default='dev',
       help='Directory to get the trained model.'
   )
 

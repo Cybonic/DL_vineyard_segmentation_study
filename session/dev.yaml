@@ -5,14 +5,15 @@ name: 'dev'
 
 dataset:
   root: samples
-  name: RGBX7   
-  train: [qtabaixo]
-  test:  ['qtabaixo']
+  name: x7   
+  train: [esac]
+  test:  ['valdoeiro']
   loader:
-    shuffle: False
-    batch_size: 1
+    shuffle: True
+    batch_size: 10
     workers: 1 
-  augment: False 
+  augment: True 
+  fraction: 0.2
 
 # Model to be loaded
 network: 
@@ -33,7 +34,7 @@ network:
     path: 'checkpoints\t1\hd'
     file: 'segnet_best'
 # training parameters
-max_epochs: 5
+max_epochs: 50
 report_val: 1
 # optimization parameters
 optimizer:

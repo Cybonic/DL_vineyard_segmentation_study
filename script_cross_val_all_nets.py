@@ -45,6 +45,8 @@ hd_files = 'rgb'
 LR = {'segnet':0.000171,'unet_bn':0.0001,'modsegnet':0.00011029}
 WD = {'segnet':0.000061268,'unet_bn':0.00004,'modsegnet':0.0006758}
 
+REPETITIONS = 1
+
 EXEC_FILE = 'train.py'
 CMD = 'python3'
 PLOT_FLAG = 0
@@ -67,12 +69,12 @@ DEPLOY_PARAMETERS = {
 'WEIGHT_DECAY':  0.00004,
 'BATCH_SIZE':  10,
 'SHUFFLE':  True,
-'MAX_EPOCH': 50,
-'VAL_EPOCH': 10,
+'MAX_EPOCH': 100,
+'VAL_EPOCH': 5,
 'amsgrad': True,
 'TEMP_SESSION': 'temp',
-'AUGMENT': True,
-'FRACTION': 1,
+'AUGMENT': False,
+'FRACTION': 0.5,
 }
 
 def UpdateSession(sessionfilepath,**arg):
@@ -94,12 +96,12 @@ def UpdateSession(sessionfilepath,**arg):
     # ===============================================================================
     # Update parameters 
     session_settings['network']['model'] = network
-    session_settings['network']['index']['NDVI'] = True
+    session_settings['network']['index']['NDVI'] = False
     session_settings['network']['pretrained']['use'] = True
     session_settings['max_epochs']= arg['MAX_EPOCH']
     session_settings['report_val']= arg['VAL_EPOCH'] 
-    session_settings['optimizer']['lr']= LR[network]
-    session_settings['optimizer']['w_decay']= WD[network]
+    #session_settings['optimizer']['lr']= LR[network]
+    #session_settings['optimizer']['w_decay']= WD[network]
     session_settings['optimizer']['amsgrad']= arg['amsgrad']  
     session_settings['dataset']['loader']['shuffle'] = arg['SHUFFLE']
     session_settings['dataset']['loader']['batch_size'] = arg['BATCH_SIZE']  
@@ -117,7 +119,7 @@ def UpdateSession(sessionfilepath,**arg):
 
 if __name__ == '__main__':
 
-    REPETITIONS = 10
+    
     pc_name = platform.node()
     print("[INFO][SCRIPT] "+ pc_name)
 
@@ -144,7 +146,12 @@ if __name__ == '__main__':
                 #    session = UpdateSession(org_session, cross_val = t, network = network, **parameters) 
                 #    run_script(session = session, cmd = EXEC_FILE,plot = PLOT_FLAG)
                 print("[SCRIPT] Test: " + t)
-                name = '_'.join(['hd',t,network])
+                name = '_'.join(['hd',t,network,
+                                    'f',str(parameters['FRACTION']),
+                                    'a',str(parameters['AUGMENT']),
+                                    'lr',str(parameters['LEARNING_RATE']),
+                                    'wd',str(parameters['WEIGHT_DECAY'])
+                                    ])
                 hd_session_root =  'hd'
                 org_session = os.path.join(hd_session_root,hd_files)
                 session = UpdateSession(org_session, cross_val = t, network = network, **parameters) 
