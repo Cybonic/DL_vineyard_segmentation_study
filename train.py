@@ -225,8 +225,8 @@ if __name__ == '__main__':
       '--session', '-f',
       type=str,
       required=False,
-      #default='hd/rgb',
-      default='dev',
+      default='hd/rgb',
+      #default='dev',
       help='Directory to get the trained model.'
   )
 
@@ -296,16 +296,16 @@ if __name__ == '__main__':
   # Saving settings
   saveing_param = session_settings['saver']  
   saver_handler = saver(**session_settings['saver'])
-  writer_name = os.path.join('saved',writer_name)
+  writer_path = os.path.join('saved',writer_name)
   
   #os.makedirs('log')
 
-  writer = tf_writer.writer(writer_name,mode= ['train','val'])
+  writer = tf_writer.writer(writer_path,mode= ['train','val'])
 
   epochs    = session_settings['max_epochs']
   VAL_EPOCH = session_settings['report_val']
 
-  session_name = session_settings['name']
+  session_name = session_settings['name'] +':' + writer_name
   print("\n--------------------------------------------------------")
   print("[INF] Max Epochs: %d"%(epochs))
   print("[INF] Validation report epoch: %d"%(VAL_EPOCH))
@@ -365,29 +365,25 @@ if __name__ == '__main__':
 
       train_loss = running_loss/len(train_loader)
       
-      writer.add_loss(train_loss,epoch,'train')
-      
       tb_frame = tf_writer.build_tb_frame(img,mask,pred_mask)
-     
       writer.add_image(tb_frame,epoch,'train')
       writer.add_f1(scores['f1'],epoch,'train')
-
+      writer.add_loss(train_loss,epoch,'train')
 
       #writer.add_scalar('Loss/train', train_loss, epoch)
-      print("train epoch : {}/{}, loss: {:.6f} f1: {:.3f}".format(epoch, epochs, train_loss,scores['f1']))
+      print("[INF|Train] epoch : {}/{}, loss: {:.6f} f1: {:.3f}".format(epoch, epochs, train_loss,scores['f1']))
       
 
       if epoch % VAL_EPOCH == 0:
         # Compute valuation
         metric = eval_net(model,val_loader,device,criterion,writer,epoch) 
   
-
-        print("[INF] Mean Loss %0.2f Mean f1 %0.2f"%(metric['f1'],metric['loss']))
+        print("[INF|Test] Mean Loss %0.2f Mean f1 %0.2f"%(metric['val_loss'],metric['f1']))
         # writer.add_scalar('f1/test', metric['f1'], epoch)
         if metric['f1'] > global_val_score['f1']:
           # Overwite
           global_val_score  = metric
-          global_val_score['loss']  = train_loss
+          global_val_score['train_loss']  = train_loss
           global_val_score['epoch'] = epoch
 
           if session_settings['network']['pretrained']['use'] == True: 
@@ -398,8 +394,6 @@ if __name__ == '__main__':
             checkpoint_name = os.path.join(checkpoint_dir,trained_model_name)
             torch.save(model.state_dict(),checkpoint_name) # torch.save(model.state_dict(), trained_weights)
             print("[INF] weights stored at: " + checkpoint_name)
-          
-
           
   
   except KeyboardInterrupt:
@@ -412,9 +406,9 @@ if __name__ == '__main__':
   text_to_store['model'] = session_settings['network']['model']
   text_to_store['session'] =  session_name
   text_to_store['f1'] =  global_val_score['f1']
-  text_to_store['ndvi_global'] =  global_val_score['ndvi_global']
-  text_to_store['ndvi_gt'] =  global_val_score['ndvi_gt']
-  text_to_store['ndvi_pred'] = global_val_score['ndvi_pred']
+  #text_to_store['ndvi_global'] =  global_val_score['ndvi_global']
+  #text_to_store['ndvi_gt'] =  global_val_score['ndvi_gt']
+  #text_to_store['ndvi_pred'] = global_val_score['ndvi_pred']
   text_to_store['epoch'] =  "%d/%d"%(global_val_score['epoch'],epochs)
   text_to_store['drop_rate'] =  session_settings['network']['drop_rate']
   text_to_store['lr'] =  session_settings['optimizer']['lr']

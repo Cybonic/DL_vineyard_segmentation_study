@@ -130,7 +130,7 @@ class augmentation():
 
     def __call__(self, bands, mask, ago_indices):
         
-        n_band = bands.shape[2]
+        n_band = bands.shape[0]
         rot_value       = random.randint(0,self.max_angle)
         rotated_bands   = ndimage.rotate(bands, rot_value, reshape=False)
         rotated_mask    = ndimage.rotate(mask, rot_value, reshape=False)
@@ -223,24 +223,23 @@ class dataset_wrapper(greenAIDataStruct):
         img_file = self.imgs[itr]
         #print(file)
         img,name = self.load_im(img_file)
-       
-        img = preprocessing(img, self.color_value)
-        
         agro_indice = np.array([])
 
         mask_file = self.masks[itr]
         mask,name = self.load_bin_mask(mask_file)
-        
 
         if self.transform:
             img,mask,agro_indice = self.transform(img,mask,agro_indice)
+
+        img = preprocessing(img, self.color_value)
+        
             
         #mask  = mask.transpose(2,0,1)
         #input_bands = input_bands.transpose(2,0,1)
-
-        #input_bands = torch.from_numpy(img).type(torch.FloatTensor)
-        mask = torch.from_numpy(mask).type(torch.FloatTensor)
+        mask = transforms.ToTensor()(mask)
         agro_indice = torch.from_numpy(agro_indice).type(torch.FloatTensor)
+        #mask = torch.from_numpy(mask).type(torch.FloatTensor)
+        #agro_indice = []
         
         path_name = self.paths[0] 
     
@@ -264,7 +263,7 @@ class dataset_wrapper(greenAIDataStruct):
         array,name = load_file(file)
         if len(array.shape)>2:
             array = array[:,:,0]
-        mask = np.expand_dims(array,axis=0)/255
+        mask = np.expand_dims(array,axis=-1)/255
         
         mask[mask>0.5]  = 1 
         mask[mask<=0.5] = 0
@@ -330,7 +329,7 @@ class dataset_loader():
         train_cond = [True for name in trainset if name in DATASET_NAMES]
         
         if train_cond:
-            self.train  = dataset_wrapper(root,trainset, sensor,bands, augment = aug,fraction = fraction['train'])
+            self.train  = dataset_wrapper(root,trainset, sensor,bands, transform = aug,fraction = fraction['train'])
             # Train loader
             self.train_loader = DataLoader(  self.train,
                                         batch_size = self.batch_size,

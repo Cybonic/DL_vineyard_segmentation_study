@@ -18,3 +18,5 @@ original_code/*
 *.tif
 samples/
 CHANGE_LOG.md
+reports/*
+saved/*

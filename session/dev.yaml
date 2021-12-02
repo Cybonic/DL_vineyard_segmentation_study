@@ -6,14 +6,14 @@ name: 'dev'
 dataset:
   root: samples
   name: x7   
-  train: [esac]
-  test:  ['valdoeiro']
+  train: [qtabaixo]
+  test:  ['qtabaixo']
   loader:
     shuffle: True
-    batch_size: 10
+    batch_size: 1
     workers: 1 
   augment: True 
-  fraction: 0.2
+  fraction: 0.5
 
 # Model to be loaded
 network: 
@@ -34,15 +34,15 @@ network:
     path: 'checkpoints\t1\hd'
     file: 'segnet_best'
 # training parameters
-max_epochs: 50
+max_epochs: 2
 report_val: 1
 # optimization parameters
 optimizer:
-  lr: 0.001
-  w_decay: 0
-  amsgrad: True
+  lr: 0.0001
+  w_decay: 0.000061268
+  amsgrad: False
   betas: [0.9, 0.99]
-  epsilon_w:  0.000000001 
+  epsilon_w:  0 
 # Saving settings
 saver:
   file: t1

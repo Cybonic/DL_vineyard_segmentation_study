@@ -52,8 +52,7 @@ def logit2label(array,thres):
     new_array = np.zeros(array.shape,dtype=np.int32)
     norm_array = torch.nn.Sigmoid()(array).cpu().detach().numpy()
     bin_class = norm_array >= thres
-    #norm_array[norm_array >= thres]  = 1
-    # norm_array[norm_array < thres] = 0
+
     new_array[bin_class] = 1
     
 
@@ -64,25 +63,33 @@ def evaluation(gtArray,predArray):
     '''
     segmentation evaluation 
     param:
-     - gtArray: ground truth mask
-     - predArray: prediction mask
+     - gtArray (flatten): ground truth mask
+     - predArray (flatten): prediction mask
     
     retrun:
         dictionary { dice , iou }
 
     '''
     
-    #dice = mean_dice_np(gtArray,predArray)
-    #iou = mean_iou_np(gtArray,predArray)
+    if torch.is_tensor(gtArray):
+      gtArray = gtArray.cpu().detach().numpy()
+    
+    if torch.is_tensor(predArray):
+      predArray = predArray.cpu().detach().numpy()
 
-    #gtArray = gtArray.flatten()
-    #predArray = predArray.flatten()
+    if len(gtArray.shape)>2:
+      gtArray = gtArray.flatten()
+    
+    if len(predArray.shape)>2:
+      predArray = predArray.flatten()
+    
+    gtArray = gtArray.astype(np.uint8)
+    predArray = predArray.astype(np.int8)
 
-    gtArray = np.array(gtArray,dtype=np.int32)
-    predArray = np.array(predArray,dtype=np.int32)
+
     f1 = f1_score(gtArray,predArray)
-
     metrics = {'f1': f1}
+  
     return(metrics)
 
 def network_wrapper(session_settings,model = None ,pretrained_file= None):
@@ -204,7 +211,7 @@ def eval_net(model,loader,device,criterion,writer,epoch,save_flag = False):
 
   masks = []
   preds = []
-  running_loss = 0
+  running_loss = []
 
   for batch in tqdm.tqdm(loader,'Validation'):
 
@@ -225,12 +232,11 @@ def eval_net(model,loader,device,criterion,writer,epoch,save_flag = False):
     # transform logit to label  
     pred_mask = logit2label(pred_mask,0.5)
     
-    loss = loss_torch.detach().item()
-    running_loss += loss
+    running_loss.append(loss_torch.detach().item())
+
     if torch.isnan(loss_torch):
       print("[WARN] WARNING NAN")
 
-  
     masks.append(msk.flatten())
     preds.append(pred_mask.flatten())
     
@@ -241,8 +247,8 @@ def eval_net(model,loader,device,criterion,writer,epoch,save_flag = False):
 
   scores = evaluation(Y,PREDS)
 
-  val_loss = running_loss/len(loader)
-  scores['loss'] = val_loss
+  val_loss = np.array(running_loss).mean()
+  scores['val_loss'] = val_loss
 
   tb_frame = tf_writer.build_tb_frame(img,mask,pred_mask)
   writer.add_image(tb_frame,epoch,'val')
