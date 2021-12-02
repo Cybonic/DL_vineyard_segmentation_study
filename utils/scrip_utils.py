@@ -25,6 +25,11 @@ def run_script(**arg):
         train_arg_list.append('--plot')
         train_arg_list.append(value)
     
+    if 'writer' in arg:
+        value = arg['writer']
+        train_arg_list.append('--writer')
+        train_arg_list.append(value)
+    
     # Add pretrained if it exists 
     if "pretrained" in arg:
         value = arg['pretrained']

@@ -144,7 +144,8 @@ if __name__ == '__main__':
                 #    session = UpdateSession(org_session, cross_val = t, network = network, **parameters) 
                 #    run_script(session = session, cmd = EXEC_FILE,plot = PLOT_FLAG)
                 print("[SCRIPT] Test: " + t)
-                hd_session_root = 'hd'
+                name = '_'.join(['hd',t,network])
+                hd_session_root =  'hd'
                 org_session = os.path.join(hd_session_root,hd_files)
                 session = UpdateSession(org_session, cross_val = t, network = network, **parameters) 
-                run_script(session = session, cmd = EXEC_FILE,plot = PLOT_FLAG)
+                run_script(session = session, cmd = EXEC_FILE,writer = name)

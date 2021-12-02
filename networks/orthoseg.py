@@ -49,7 +49,7 @@ class OrthoSeg(nn.Module):
         else:
             raise NameError 
 
-        self.apply_init_weights()
+        #self.apply_init_weights()
 
     
     def forward(self,x):

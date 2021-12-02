@@ -7,19 +7,19 @@ dataset:
   #root: '/home/tiago/remote_dataset/dataset/greenAI/learning/'
   root: /home/tiago/big/dataset/greenAI/learning/
   #DESKTOP-5V7R599: 'D:\OneDrive - isr.uc.pt\Datasets\greenAI\learning'
-  train: ['qtabaixo']
-  test:  ['qtabaixo']
+  train: ['esac']
+  test:  ['valdoeiro']
   #train: ['esac1','esac2']
   #test:  [qtabaixo,'valdoeiro']
   fraction: 0.1
   loader:
     shuffle: False
-    batch_size: 1
+    batch_size: 10
     workers: 0
   augment: False  
 # Model to be loaded
 network: 
-  model: 'segnet'
+  model: 'unet_bn'
   input_shape: [240,240]
   drop_rate: 0.5
   bands:
@@ -42,9 +42,9 @@ report_val: 5
 optimizer:
   lr: 0.001
   w_decay: 0
-  amsgrad: True
+  amsgrad: False
   betas: [0.9, 0.99]
-  epsilon_w:  0.000000001 
+  epsilon_w:  0 
 # Saving settings
 saver:
   file: t1

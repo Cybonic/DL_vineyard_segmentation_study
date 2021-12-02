@@ -210,9 +210,9 @@ class dataset_wrapper(greenAIDataStruct):
 
         img_file = self.imgs[itr]
         #print(file)
-        img,name = self.load_im(img_file)
+        imgs,name = self.load_im(img_file)
        
-        img = preprocessing(img, self.color_value)
+        img = preprocessing(imgs, self.color_value)
         
         if  self.sensor != 'x7' and any(self.agro_index.values())==True:
             # HD has no NIR and RE bands to compute NDVI
@@ -320,7 +320,7 @@ class dataset_loader():
         train_cond = [True for name in trainset if name in DATASET_NAMES]
         
         if train_cond:
-            self.train  = dataset_wrapper(root,testset, sensor,bands, agro_index,fraction = fraction['train'])
+            self.train  = dataset_wrapper(root,trainset, sensor,bands, agro_index,fraction = fraction['train'])
             # Train loader
             self.train_loader = DataLoader(  self.train,
                                         batch_size = self.batch_size,
