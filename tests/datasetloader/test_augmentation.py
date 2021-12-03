@@ -104,7 +104,7 @@ def test_tf_writer_on_synthetic_data(writer,images,signals,mode)-> bool:
 if __name__ == '__main__':
     
 
-    RANDOM = "TEST_AUG1"
+    RANDOM = "TEST_AUG2"
     name = ''.join([DATASET,'h',str(HEIGHT),'w',str(WIDTH),'b',str(BATCH_SIZE),'e',str(MAX_EPOCH),])
 
     images,signals = synthetic_data_generator()

@@ -69,12 +69,12 @@ DEPLOY_PARAMETERS = {
 'WEIGHT_DECAY':  0.00004,
 'BATCH_SIZE':  10,
 'SHUFFLE':  True,
-'MAX_EPOCH': 100,
-'VAL_EPOCH': 5,
+'MAX_EPOCH': 60,
+'VAL_EPOCH': 1,
 'amsgrad': True,
 'TEMP_SESSION': 'temp',
 'AUGMENT': True,
-'FRACTION': 1,
+'FRACTION': 0.5,
 }
 
 def UpdateSession(sessionfilepath,**arg):
@@ -100,8 +100,8 @@ def UpdateSession(sessionfilepath,**arg):
     session_settings['network']['pretrained']['use'] = True
     session_settings['max_epochs']= arg['MAX_EPOCH']
     session_settings['report_val']= arg['VAL_EPOCH'] 
-    session_settings['optimizer']['lr']= LR[network]
-    session_settings['optimizer']['w_decay']= WD[network]
+    #session_settings['optimizer']['lr']= LR[network]
+    #session_settings['optimizer']['w_decay']= WD[network]
     session_settings['optimizer']['amsgrad']= arg['amsgrad']  
     session_settings['dataset']['loader']['shuffle'] = arg['SHUFFLE']
     session_settings['dataset']['loader']['batch_size'] = arg['BATCH_SIZE']  

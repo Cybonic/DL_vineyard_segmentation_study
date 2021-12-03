@@ -11,12 +11,12 @@ dataset:
   test:  ['valdoeiro']
   #train: ['esac1','esac2']
   #test:  [qtabaixo,'valdoeiro']
-  fraction: 0.1
+  fraction: 0.2
   loader:
     shuffle: False
     batch_size: 10
     workers: 0
-  augment: False  
+  augment: True  
 # Model to be loaded
 network: 
   model: 'unet_bn'
@@ -37,7 +37,7 @@ network:
     file: 'segnet_best'
 # training parameters
 max_epochs: 100
-report_val: 5
+report_val: 1
 # optimization parameters
 optimizer:
   lr: 0.001
