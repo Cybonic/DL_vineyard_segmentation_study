@@ -400,6 +400,7 @@ class dataset_loader():
             print("[INF] Batch Size: %d"%(self.batch_size))
             print("[INF] Shuffle: %d"%(self.shuffle))
             print("[INF] Workers: %d"%(self.workers))
+            print("[INF] Augment: %d"%(augment))
 
             print("---"*10)
 
