@@ -11,9 +11,9 @@ dataset:
   test:  ['valdoeiro']
   #train: ['esac1','esac2']
   #test:  [qtabaixo,'valdoeiro']
-  fraction: 0.2
+  fraction: 1
   loader:
-    shuffle: False
+    shuffle: True
     batch_size: 10
     workers: 0
   augment: True  

@@ -319,7 +319,7 @@ if __name__ == '__main__':
   print("--------------------------------------------------------\n")
 
   
-  global_val_score = {'f1':-1,'epoch':0}
+  global_val_score = {'f1':-1,'epoch':0,'model':''} # keeps the best values
   try:
     for epoch in range(epochs):
           
@@ -383,26 +383,36 @@ if __name__ == '__main__':
         print("[INF|Test] Mean Loss %0.2f Mean f1 %0.2f"%(metric['val_loss'],metric['f1']))
         # writer.add_scalar('f1/test', metric['f1'], epoch)
         if metric['f1'] > global_val_score['f1']:
+          
           # Overwite
           global_val_score  = metric
-          global_val_score['train_loss']  = train_loss
+          global_val_score['train_loss'] = train_loss
           global_val_score['epoch'] = epoch
-
+         
           if session_settings['network']['pretrained']['use'] == True: 
-            trained_model_name = '%s_f1_%02d.pth'%(session_name,(metric['f1']*100))
+            # model name
+            trained_model_name = '%s_f1_%02d.pth'%(session_name,(metric['f1']*100)) 
+            # build model path
             checkpoint_dir = os.path.join(pretrained_path,session_settings['network']['model'])
             if not os.path.isdir(checkpoint_dir):
               os.makedirs(checkpoint_dir)
+            # Build full model path
             checkpoint_name = os.path.join(checkpoint_dir,trained_model_name)
+            # save model weights 
             torch.save(model.state_dict(),checkpoint_name) # torch.save(model.state_dict(), trained_weights)
             print("[INF] weights stored at: " + checkpoint_name)
+
+            global_val_score['model'] = checkpoint_name # keep the best model for later
+          
+          
+
           
   
   except KeyboardInterrupt:
     print("[INF] CTR + C")
   
-  #except:
-  #  print("[INF] Error")
+  #if 'model' in global_val_score:
+  #  global_val_score['model']
   
   text_to_store = {}
   text_to_store['model'] = session_settings['network']['model']
