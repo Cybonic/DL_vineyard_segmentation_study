@@ -74,7 +74,8 @@ if __name__ == '__main__':
                         agro_index = {'NDVI':False}, 
                         transform = None, 
                         path_type='global',
-                        fraction = None)
+                        fraction = None,
+                        savage_mode=True)
   
   print("Sets:"+f'{dataset.plot}')
   print("Sensor:" + dataset.sensor)

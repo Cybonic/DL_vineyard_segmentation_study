@@ -26,6 +26,7 @@ import torch.utils.data as torch_utils
 import rioxarray
 from PIL import Image
 from torchvision import transforms
+from tqdm import tqdm
 
 
 import cv2 
@@ -187,7 +188,7 @@ class greenAIDataStruct():
     def fetch_mask_files(self):
         return(self.fetch_files('masks'))
     
-    def get_data(self,path_type = 'global',fraction = None):
+    def get_data_files(self,path_type = 'global',fraction = None):
 
         imgs,full_img_path = self.fetch_files('images')
         masks,full_mask_path = self.fetch_files('masks')
@@ -207,6 +208,37 @@ class greenAIDataStruct():
             
         return({'imgs':imgs,'masks':masks})
 
+    def load_data_to_RAM(self,data):
+           
+        image_vector = []
+        mask_vector  = []
+
+        data = zip(data['imgs'],data['masks'])
+        for img_file, mask_file in tqdm(data):
+            
+            img,name = self.load_im(img_file)
+            mask,name = self.load_bin_mask(mask_file)
+            image_vector.append(img)
+            mask_vector.append(mask)
+
+        #image_vector = np.stack(image_vector,axis=0)
+        return({'imgs':image_vector,'masks':mask_vector})
+    
+    def load_data(self,itr):
+        
+
+        if self.savage_mode:
+            # data is already loaded in RAM
+            img = self.imgs[itr]
+            mask = self.masks[itr]
+        else: 
+            img_file = self.imgs[itr]
+            mask_file = self.masks[itr]
+            
+            img,name = self.load_im(img_file)
+            mask,name = self.load_bin_mask(mask_file)
+        return(img,mask)
+
 
 class dataset_wrapper(greenAIDataStruct):
     def __init__(self, root,
@@ -215,35 +247,40 @@ class dataset_wrapper(greenAIDataStruct):
                         agro_index = {'NDVI':False}, 
                         transform = None, 
                         path_type='global',
-                        fraction = None):
+                        fraction = None,
+                        savage_mode=False):
         super(dataset_wrapper, self).__init__(root,vineyard_plot,sensor)
         
-        self.data   = self.get_data(fraction=fraction)
-        self.imgs = np.array(self.data['imgs'])
-        self.masks = np.array(self.data['masks'])
-        self.bands_to_use = bands
-        self.agro_index = agro_index
-        self.transform = transform
-        self.sensor  =sensor
+        self.savage_mode = savage_mode # flag that defines data loading option 
+        # True-> all data are loaded to RAM at the begining; 
+        # False -> data is loaded during operation
+       
+        self.bands_to_use   = bands
+        self.agro_index =   agro_index
+        self.transform  =   transform
+        self.sensor     =   sensor
+
+
+        self.data   = self.get_data_files(fraction=fraction)
+        if savage_mode:
+            self.data = self.load_data_to_RAM(self.data )
+            
+        self.imgs   = np.array(self.data['imgs'])
+        self.masks  = np.array(self.data['masks'])
 
         self.input_channels = {'bands':bands,'indices':agro_index}
         self.color_value =  0
 
     def __getitem__(self,itr):
 
-        img_file = self.imgs[itr]
+        img,mask = self.load_data(itr)
         #print(file)
-        img,name = self.load_im(img_file)
         agro_indice = np.array([])
-
-        mask_file = self.masks[itr]
-        mask,name = self.load_bin_mask(mask_file)
 
         if self.transform:
             img,mask,agro_indice = self.transform(img,mask,agro_indice)
 
         img = preprocessing(img, self.color_value)
-        
             
         #mask  = mask.transpose(2,0,1)
         #input_bands = input_bands.transpose(2,0,1)
@@ -254,7 +291,8 @@ class dataset_wrapper(greenAIDataStruct):
         
         path_name = self.paths[0] 
     
-        batch = {'bands':img,'mask':mask,'indices':agro_indice,'name':name,'path':path_name}
+        
+        batch = {'bands':img,'mask':mask,'indices':agro_indice,'name':'','path':path_name}
         # Convert to tensor
         return(batch)
     
@@ -294,7 +332,8 @@ class dataset_loader():
                     shuffle = True, 
                     workers = 1, 
                     debug = True,
-                    fraction = {'train':None, 'test':None}):
+                    fraction = {'train':None, 'test':None},
+                    savage_mode=0):
 
         self.sensor = sensor
         self.batch_size = batch_size 
@@ -328,7 +367,7 @@ class dataset_loader():
         if test_cond:
         
             # test loader
-            self.test  = dataset_wrapper(root,testset, sensor,bands,fraction = fraction['train'])
+            self.test  = dataset_wrapper(root,testset, sensor,bands,fraction = fraction['train'],savage_mode=savage_mode)
 
             self.test_loader = DataLoader(  self.test,
                                     batch_size = 1,
@@ -340,7 +379,7 @@ class dataset_loader():
         train_cond = [True for name in trainset if name in DATASET_NAMES]
         
         if train_cond:
-            self.train  = dataset_wrapper(root,trainset, sensor,bands, transform = aug,fraction = fraction['train'])
+            self.train  = dataset_wrapper(root,trainset, sensor,bands, transform = aug,fraction = fraction['train'],savage_mode=savage_mode)
             # Train loader
             self.train_loader = DataLoader(  self.train,
                                         batch_size = self.batch_size,

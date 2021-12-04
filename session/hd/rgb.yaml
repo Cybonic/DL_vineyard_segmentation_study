@@ -19,7 +19,7 @@ dataset:
   augment: True  
 # Model to be loaded
 network: 
-  model: 'unet_bn'
+  model: 'segnet'
   input_shape: [240,240]
   drop_rate: 0.5
   bands:

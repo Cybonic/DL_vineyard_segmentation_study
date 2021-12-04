@@ -101,7 +101,7 @@ def network_wrapper(session_settings,pretrained_file= None):
 
 # ==================================================
 
-def dataset_loader_wrapper(root,session_settings):
+def dataset_loader_wrapper(root,session_settings,savage_mode):
   """
   dataset parser
 
@@ -146,7 +146,8 @@ def dataset_loader_wrapper(root,session_settings):
                           batch_size = batch_size ,
                           shuffle = shuffle ,
                           workers = workers,
-                          fraction = {'train':fraction,'test':fraction} # [0,1]
+                          fraction = {'train':fraction,'test':fraction}, # [0,1]
+                          savage_mode=savage_mode
                           )
 
   # Get loaders
@@ -262,6 +263,7 @@ if __name__ == '__main__':
       help='Directory to get the trained model.'
   )
 
+
   FLAGS, unparsed = parser.parse_known_args()
 
 
@@ -287,7 +289,7 @@ if __name__ == '__main__':
   model, pretrained_path, device = network_wrapper(session_settings)
   # Load dataset 
   # Get train and val loaders
-  train_loader, val_loader = dataset_loader_wrapper(root,session_settings)
+  train_loader, val_loader = dataset_loader_wrapper(root,session_settings,savage_mode =1)
   # Set the loss function
    
   optimizer, criterion = load_optimizer_wrapper(model,session_settings)
