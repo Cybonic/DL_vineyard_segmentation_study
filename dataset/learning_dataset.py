@@ -214,7 +214,7 @@ class greenAIDataStruct():
         mask_vector  = []
 
         data = zip(data['imgs'],data['masks'])
-        for img_file, mask_file in tqdm(data):
+        for img_file, mask_file in data:
             
             img,name = self.load_im(img_file)
             mask,name = self.load_bin_mask(mask_file)
@@ -370,7 +370,7 @@ class dataset_loader():
             self.test  = dataset_wrapper(root,testset, sensor,bands,fraction = fraction['train'],savage_mode=savage_mode)
 
             self.test_loader = DataLoader(  self.test,
-                                    batch_size = 1,
+                                    batch_size = self.batch_size,
                                     shuffle = False,
                                     num_workers = self.workers,
                                     pin_memory=False)
@@ -401,6 +401,7 @@ class dataset_loader():
             print("[INF] Shuffle: %d"%(self.shuffle))
             print("[INF] Workers: %d"%(self.workers))
             print("[INF] Augment: %d"%(augment))
+            print("[INF] Savage mode: %d"%(savage_mode))
 
             print("---"*10)
 

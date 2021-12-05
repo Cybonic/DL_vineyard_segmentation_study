@@ -56,6 +56,7 @@ def network_wrapper(session_settings,pretrained_file= None):
   pretrained_path = network_param['pretrained']['path']
   pretrained_flag = network_param['pretrained']['use']
   drop_rate = network_param['drop_rate']
+  model_name = network_param['model']
 
 
   # Dump to terminal 
@@ -79,15 +80,16 @@ def network_wrapper(session_settings,pretrained_file= None):
   model = OrthoSeg(network_param,image_shape,channels=count,drop_rate = drop_rate)
 
   if pretrained_flag == True:
-    pretrained_to_load = os.path.join(pretrained_path,pretrained_file+'.pth')
+    root = os.path.join(pretrained_path,model_name)
+    pretrained_to_load = os.path.join(root,pretrained_file+'.pth')
     if os.path.isfile(pretrained_to_load):
       print("[INF] Loading Pretrained model: " + pretrained_to_load)
       model.load_state_dict(torch.load(pretrained_to_load))
     else:
       print("[INF] No pretrained weights loaded: " + pretrained_to_load)
 
-  if not os.path.isdir(pretrained_path):
-    os.makedirs(pretrained_path)
+  if not os.path.isdir(root):
+    os.makedirs(root)
 
   # Device configuration
   device = 'cpu'
@@ -97,7 +99,7 @@ def network_wrapper(session_settings,pretrained_file= None):
 
   model.to(device)
   model.train()
-  return(model, pretrained_path,device)
+  return(model, root,device)
 
 # ==================================================
 
@@ -213,6 +215,7 @@ if __name__ == '__main__':
       #default='samples',
       help='Directory to get the trained model.'
   )
+
 
   parser.add_argument(
       '--model', '-m',
@@ -393,7 +396,7 @@ if __name__ == '__main__':
             # model name
             trained_model_name = '%s_f1_%02d.pth'%(session_name,(metric['f1']*100)) 
             # build model path
-            checkpoint_dir = os.path.join(pretrained_path,session_settings['network']['model'])
+            checkpoint_dir = os.path.join(pretrained_path,'all')
             if not os.path.isdir(checkpoint_dir):
               os.makedirs(checkpoint_dir)
             # Build full model path
@@ -401,19 +404,27 @@ if __name__ == '__main__':
             # save model weights 
             torch.save(model.state_dict(),checkpoint_name) # torch.save(model.state_dict(), trained_weights)
             print("[INF] weights stored at: " + checkpoint_name)
+            # keep the best model for later
+            global_val_score['model'] = {'path':checkpoint_name,'name':trained_model_name}
 
-            global_val_score['model'] = checkpoint_name # keep the best model for later
-          
-          
-
-          
   
   except KeyboardInterrupt:
     print("[INF] CTR + C")
   
-  #if 'model' in global_val_score:
-  #  global_val_score['model']
-  
+  #Save best model 
+  if session_settings['network']['pretrained']['use'] == True: 
+    
+    destination = os.path.join(
+                    pretrained_path,
+                    session_settings['network']['pretrained']['file'] +'.pth'
+                    )
+    try:
+        shutil.copy(global_val_score['model']['path'], destination)
+    except:
+        print("[Error] File not copied: " + destination ) 
+
+    print("[INF] Saved best model to : " + destination )
+
   text_to_store = {}
   text_to_store['model'] = session_settings['network']['model']
   text_to_store['session'] =  session_name
