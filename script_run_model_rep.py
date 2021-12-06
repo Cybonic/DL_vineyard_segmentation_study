@@ -50,6 +50,9 @@ REPETITIONS = 1
 EXEC_FILE = 'train.py'
 CMD = 'python3'
 PLOT_FLAG = 0
+NAME = 'rep_study'
+
+LR_RANGE= [0.00001,0.0001,0.001,0.01,0.1]
 
 TEST_PARAMETERS = {
 'LEARNING_RATE': 0.0001,
@@ -62,20 +65,21 @@ TEST_PARAMETERS = {
 'TEMP_SESSION': 'temp',
 'AUGMENT': True,
 'FRACTION': 1,
+'USE_PRETRAINED': False
 }
 
 DEPLOY_PARAMETERS = {
 'LEARNING_RATE': 0.0001,
-'WEIGHT_DECAY':  0.00004,
-'BATCH_SIZE':  10,
+'WEIGHT_DECAY':  0,
+'BATCH_SIZE':  5,
 'SHUFFLE':  True,
-'MAX_EPOCH': 100,
+'MAX_EPOCH': 50,
 'VAL_EPOCH': 1,
 'amsgrad': True,
 'TEMP_SESSION': 'temp',
 'AUGMENT': True,
-'FRACTION': 1,
-'SET': 'T1'
+'FRACTION': 0.2,
+'USE_PRETRAINED': False
 }
 
 def UpdateSession(sessionfilepath,**arg):
@@ -98,7 +102,7 @@ def UpdateSession(sessionfilepath,**arg):
     # Update parameters 
     session_settings['network']['model'] = network
     session_settings['network']['index']['NDVI'] = False
-    session_settings['network']['pretrained']['use'] = True
+    session_settings['network']['pretrained']['use'] = arg['USE_PRETRAINED']
     session_settings['max_epochs']= arg['MAX_EPOCH']
     session_settings['report_val']= arg['VAL_EPOCH'] 
     session_settings['optimizer']['lr']= LR[network]
@@ -111,7 +115,8 @@ def UpdateSession(sessionfilepath,**arg):
     session_settings['dataset']['test']= test
     session_settings['dataset']['fraction']= arg['FRACTION']
     session_settings['saver']['file'] = session_settings['network']['model'] + '_' + t
-    session_settings['saver']['result_dir']= 'results/robustness' 
+    session_settings['saver']['result_dir']= os.path.join('results',NAME)
+    session_settings['run'] = NAME
     # ===============================================================================
     # Save the new settings to temp file
     utils.save_config(temp_path,session_settings)
@@ -135,10 +140,14 @@ if __name__ == '__main__':
     networks = ['segnet','unet_bn','modsegnet']
     tx = ['t1','t2','t3']
 
-    for cnt in range(REPETITIONS):
-        print("[INFO][SCRIPT] Cycle: %d"%(cnt))
-        for network in networks:    
-            for t in tx:
+    lr = 0.001
+    t = 't1' 
+    
+    for network in networks:    
+        #for t in tx:
+            #for lr in LR_RANGE:
+                print("[INFO][SCRIPT] Cycle: %f"%(lr))
+                parameters['LEARNING_RATE'] = lr
                 #ms_session_root = 'ms'
                 
                 #for file in ms_files:
@@ -156,4 +165,5 @@ if __name__ == '__main__':
                 hd_session_root =  'hd'
                 org_session = os.path.join(hd_session_root,hd_files)
                 session = UpdateSession(org_session, cross_val = t, network = network, **parameters) 
+
                 run_script(session = session, cmd = EXEC_FILE,writer = name)

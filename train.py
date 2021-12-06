@@ -78,9 +78,10 @@ def network_wrapper(session_settings,pretrained_file= None):
   #    count = count +1
 
   model = OrthoSeg(network_param,image_shape,channels=count,drop_rate = drop_rate)
+  root = os.path.join(pretrained_path,model_name)
 
   if pretrained_flag == True:
-    root = os.path.join(pretrained_path,model_name)
+    
     pretrained_to_load = os.path.join(root,pretrained_file+'.pth')
     if os.path.isfile(pretrained_to_load):
       print("[INF] Loading Pretrained model: " + pretrained_to_load)
@@ -88,8 +89,8 @@ def network_wrapper(session_settings,pretrained_file= None):
     else:
       print("[INF] No pretrained weights loaded: " + pretrained_to_load)
 
-  if not os.path.isdir(root):
-    os.makedirs(root)
+    if not os.path.isdir(root):
+      os.makedirs(root)
 
   # Device configuration
   device = 'cpu'
@@ -301,7 +302,7 @@ if __name__ == '__main__':
   # Saving settings
   saveing_param = session_settings['saver']  
   saver_handler = saver(**session_settings['saver'])
-  writer_path = os.path.join('saved',writer_name)
+  writer_path = os.path.join('saved',session_settings['run'],writer_name)
   
   #os.makedirs('log')
 

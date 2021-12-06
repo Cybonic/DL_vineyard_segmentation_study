@@ -32,9 +32,9 @@ network:
   index:
     NDVI: False
   pretrained: 
-    use: False
-    path: 'checkpoints\t1\hd'
-    file: 'segnet_best'
+    use: True
+    path: 'checkpoints/hd'
+    file: 'best'
 # training parameters
 max_epochs: 100
 report_val: 1

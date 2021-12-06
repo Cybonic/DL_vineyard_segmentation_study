@@ -30,7 +30,7 @@ network:
   index:
     NDVI: False
   pretrained: 
-    use: False
+    use: True
     path: 'checkpoints\t1\hd'
     file: 'segnet_best'
 # training parameters

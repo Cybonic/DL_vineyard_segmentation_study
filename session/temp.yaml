@@ -1,0 +1,50 @@
+dataset:
+  augment: true
+  fraction: 1
+  loader:
+    batch_size: 1
+    shuffle: false
+    workers: 0
+  name: x7
+  root: /home/tiago/big/dataset/greenAI/learning/
+  test:
+  - qtabaixo
+  train:
+  - esac
+  - valdoeiro
+device: cuda:1
+max_epochs: 1
+name: hd_rbg
+network:
+  bands:
+    B: true
+    G: true
+    NIR: false
+    R: true
+    RE: false
+    thermal: false
+  drop_rate: 0.5
+  index:
+    NDVI: false
+  input_shape:
+  - 240
+  - 240
+  model: segnet
+  pretrained:
+    file: best
+    path: checkpoints/hd
+    use: false
+optimizer:
+  amsgrad: false
+  betas:
+  - 0.9
+  - 0.99
+  epsilon_w: 0
+  lr: 0.000171
+  w_decay: 6.1268e-05
+report_val: 1
+run: lr_study
+saver:
+  file: segnet_t1
+  prediction_dir: prediction
+  result_dir: results/lr_study
