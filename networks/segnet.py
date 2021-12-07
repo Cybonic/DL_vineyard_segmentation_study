@@ -80,6 +80,7 @@ class _Encoder(nn.Module):
             layers += [nn.Conv2d(n_out_feat, n_out_feat, 3, 1, 1),
                        nn.BatchNorm2d(n_out_feat),
                        nn.ReLU(inplace=True)]
+                       
             if n_blocks == 3:
                 layers += [nn.Dropout(drop_rate)]
 

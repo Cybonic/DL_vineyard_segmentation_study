@@ -2,7 +2,7 @@
 device: 'cuda:0'
 name: 'dev'
   
-
+run: 'dev'
 dataset:
   root: samples
   name: x7   

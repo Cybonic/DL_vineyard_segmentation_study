@@ -78,7 +78,7 @@ def network_wrapper(session_settings,pretrained_file= None):
   #    count = count +1
 
   model = OrthoSeg(network_param,image_shape,channels=count,drop_rate = drop_rate)
-  root = os.path.join(pretrained_path,model_name)
+  root = os.path.join(model_name,pretrained_path,)
 
   if pretrained_flag == True:
     
@@ -230,8 +230,8 @@ if __name__ == '__main__':
       '--session', '-f',
       type=str,
       required=False,
-      default='hd/rgb',
-      #default='dev',
+      #default='hd/rgb',
+      default='dev',
       help='Directory to get the trained model.'
   )
 
@@ -303,6 +303,7 @@ if __name__ == '__main__':
   saveing_param = session_settings['saver']  
   saver_handler = saver(**session_settings['saver'])
   writer_path = os.path.join('saved',session_settings['run'],writer_name)
+  #writer_path = os.path.join('saved',writer_name)
   
   #os.makedirs('log')
 

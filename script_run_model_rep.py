@@ -42,7 +42,7 @@ ms_files = [
 
 hd_files = 'rgb'
 
-LR = {'segnet':0.000171,'unet_bn':0.0001,'modsegnet':0.00011029}
+LR = {'segnet':0.00171,'unet_bn':0.0001,'modsegnet':0.00011029}
 WD = {'segnet':0.000061268,'unet_bn':0.00004,'modsegnet':0.0006758}
 
 REPETITIONS = 1
@@ -50,7 +50,7 @@ REPETITIONS = 1
 EXEC_FILE = 'train.py'
 CMD = 'python3'
 PLOT_FLAG = 0
-NAME = 'rep_study'
+NAME = 'paper'
 
 LR_RANGE= [0.00001,0.0001,0.001,0.01,0.1]
 
@@ -78,8 +78,8 @@ DEPLOY_PARAMETERS = {
 'amsgrad': True,
 'TEMP_SESSION': 'temp',
 'AUGMENT': True,
-'FRACTION': 0.2,
-'USE_PRETRAINED': False
+'FRACTION': 1,
+'USE_PRETRAINED': True
 }
 
 def UpdateSession(sessionfilepath,**arg):
@@ -103,10 +103,11 @@ def UpdateSession(sessionfilepath,**arg):
     session_settings['network']['model'] = network
     session_settings['network']['index']['NDVI'] = False
     session_settings['network']['pretrained']['use'] = arg['USE_PRETRAINED']
+    session_settings['network']['pretrained']['path'] = os.path.join(sessionfilepath,t)
     session_settings['max_epochs']= arg['MAX_EPOCH']
     session_settings['report_val']= arg['VAL_EPOCH'] 
-    session_settings['optimizer']['lr']= LR[network]
-    session_settings['optimizer']['w_decay']= WD[network]
+    session_settings['optimizer']['lr']= arg['LEARNING_RATE']
+    session_settings['optimizer']['w_decay']= arg['WEIGHT_DECAY']
     session_settings['optimizer']['amsgrad']= arg['amsgrad']  
     session_settings['dataset']['loader']['shuffle'] = arg['SHUFFLE']
     session_settings['dataset']['loader']['batch_size'] = arg['BATCH_SIZE']  
@@ -117,11 +118,18 @@ def UpdateSession(sessionfilepath,**arg):
     session_settings['saver']['file'] = session_settings['network']['model'] + '_' + t
     session_settings['saver']['result_dir']= os.path.join('results',NAME)
     session_settings['run'] = NAME
+
+    name = '_'.join(['hd',t,network,
+                                    'f',str(arg['FRACTION']),
+                                    'a',str(arg['AUGMENT']),
+                                    'lr',str(arg['LEARNING_RATE']),
+                                    'wd',str(arg['WEIGHT_DECAY'])
+                                    ])
     # ===============================================================================
     # Save the new settings to temp file
     utils.save_config(temp_path,session_settings)
     # Run script 
-    return(arg['TEMP_SESSION'] )
+    return(arg['TEMP_SESSION'] ,name)
 
 if __name__ == '__main__':
 
@@ -138,16 +146,19 @@ if __name__ == '__main__':
         print("[INFO][SCRIPT] LOADING Deploy Paramters")
 
     networks = ['segnet','unet_bn','modsegnet']
+    #networks = ['segnet']
     tx = ['t1','t2','t3']
 
-    lr = 0.001
+    #lr = 0.1
+    
     t = 't1' 
     
     for network in networks:    
         #for t in tx:
-            #for lr in LR_RANGE:
+            for lr in LR_RANGE:
                 print("[INFO][SCRIPT] Cycle: %f"%(lr))
-                parameters['LEARNING_RATE'] = lr
+                parameters['LEARNING_RATE'] = LR[network]
+                parameters['WEIGHT_DECAY'] = WD[network]
                 #ms_session_root = 'ms'
                 
                 #for file in ms_files:
@@ -156,14 +167,9 @@ if __name__ == '__main__':
                 #    session = UpdateSession(org_session, cross_val = t, network = network, **parameters) 
                 #    run_script(session = session, cmd = EXEC_FILE,plot = PLOT_FLAG)
                 print("[SCRIPT] Test: " + t)
-                name = '_'.join(['hd',t,network,
-                                    'f',str(parameters['FRACTION']),
-                                    'a',str(parameters['AUGMENT']),
-                                    'lr',str(parameters['LEARNING_RATE']),
-                                    'wd',str(parameters['WEIGHT_DECAY'])
-                                    ])
+                
                 hd_session_root =  'hd'
                 org_session = os.path.join(hd_session_root,hd_files)
-                session = UpdateSession(org_session, cross_val = t, network = network, **parameters) 
+                session,name = UpdateSession(org_session, cross_val = t, network = network, **parameters) 
 
                 run_script(session = session, cmd = EXEC_FILE,writer = name)
