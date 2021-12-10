@@ -27,6 +27,7 @@ import rioxarray
 from PIL import Image
 from torchvision import transforms
 from tqdm import tqdm
+import dataset.transforms as mytransform
 
 
 import cv2 
@@ -56,8 +57,21 @@ def comp_agro_indices(bands, indices_to_compute):
         indices = ndvi 
     return(ndvi)
 
+def preprocessing(img,values):
+   
+    img = img.transpose(2,0,1)
+    nrom_bands = []
+    for i,C in enumerate(img):
+        C = data_utils.normalize(C)
 
-def preprocessing(img,mean=0,std=1):
+        nrom_bands.append(C)
+    nrom_bands = tuple(nrom_bands)
+    nrom_bands = np.stack(nrom_bands)
+    nrom_bands = nrom_bands.transpose(1,2,0)    
+ 
+    return(nrom_bands)
+
+def preprocessingv2(img,mean=0,std=1):
    
 
     transform_norm = transforms.Compose([
@@ -120,8 +134,18 @@ class augmentation():
     # https://medium.com/pytorch/multi-target-in-albumentations-16a777e9006e
     def __init__(self,sensor_type,max_angle = MAX_ANGLE):
         self.max_angle =max_angle
-
+        
+        
         if sensor_type == 'x7':
+            # Color  related augmentations
+            self.transform  = mytransform.Compose([
+                mytransform.CenterCrop(120),
+                mytransform.RandomHorizontalFlip(0.5),
+                mytransform.RandomRotate(0,180),
+                mytransform.Normalize(0,1)
+
+            ])
+            '''
             self.transform = A.Compose([
                         A.HorizontalFlip(p=0.5),
                         A.GridDistortion(p=0.5),    
@@ -136,6 +160,8 @@ class augmentation():
                     ], 
                     p=1
                 )
+            '''
+
         if sensor_type == 'altum':
             self.transform = A.Compose([
                         A.HorizontalFlip(p=0.5),
@@ -155,10 +181,10 @@ class augmentation():
 
     def __call__(self, bands, mask, ago_indices):
         
-        transformed = self.transform(image = bands,mask = mask)
-
-        rotated_bands = transformed['image']
-        rotated_mask = transformed['mask']
+        #transformed = self.transform(image = bands,mask = mask)
+        rotated_bands,rotated_mask = self.transform(image = bands,target = mask)
+        #rotated_bands = transformed['image']
+        #rotated_mask = transformed['mask']
 
         # if not isinstance(ago_indices,(np.ndarray, np.generic)):
         if  ago_indices is not None and ago_indices.size >0:
@@ -290,8 +316,6 @@ class dataset_wrapper(greenAIDataStruct):
         #print(file)
         agro_indice = np.array([])
 
-        
-        
 
         if self.transform:
             img,mask,agro_indice = self.transform(img,mask,agro_indice)
