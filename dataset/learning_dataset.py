@@ -65,8 +65,8 @@ def preprocessing(img,mean=0,std=1):
     transforms.Normalize(mean, std)
     ])
 
-    nrom_bands = transform_norm(img)   
- 
+    nrom_bands = transform_norm(img).numpy()   
+    nrom_bands = np.transpose(nrom_bands,(1,2,0))
     return(nrom_bands)
 
 
@@ -96,10 +96,10 @@ def load_file(file):
     file_type = file.split('.')[-1]
 
     if file_type=='tiff':
-        #raster = rioxarray.open_rasterio(file)
         array = np.array(Image.open(file)).astype(np.uint8)
-        # array = tiff2numpy(raster)
-
+    elif file_type=='tif':
+         raster = rioxarray.open_rasterio(file)
+         array = tiff2numpy(raster)
     elif(file_type=='png'):
         array = np.array(Image.open(file)).astype(np.uint8)
     else:
@@ -118,32 +118,45 @@ class augmentation():
     split_idx = 0
     # https://datamahadev.com/performing-image-augmentation-using-pytorch/
     # https://medium.com/pytorch/multi-target-in-albumentations-16a777e9006e
-    def __init__(self,max_angle = MAX_ANGLE):
+    def __init__(self,sensor_type,max_angle = MAX_ANGLE):
         self.max_angle =max_angle
 
-        self.transform = A.Compose([
-                    A.HorizontalFlip(p=0.5),
-                    A.GridDistortion(p=0.5),    
-                    #A.RandomCrop(height=1024, width=1024, p=0.5),  
-                    A.Blur(blur_limit=7, always_apply=False, p=0.5),
-                    A.CLAHE (clip_limit=4.0, tile_grid_size=(8, 8), always_apply=False, p=0.5),
-                    A.ColorJitter (brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5, always_apply=False, p=0.5),
-                    A.ShiftScaleRotate(border_mode=cv2.BORDER_CONSTANT, 
-                          scale_limit=0.3,
-                          rotate_limit=(0, max_angle),
-                          p=0.5)  
-                ], p=1)
-
-        jitter = trans.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5)
+        if sensor_type == 'x7':
+            self.transform = A.Compose([
+                        A.HorizontalFlip(p=0.5),
+                        A.GridDistortion(p=0.5),    
+                        A.RandomCrop(height=120, width=120, p=0.5),  
+                        A.Blur(blur_limit=7, always_apply=False, p=0.5),
+                        A.CLAHE (clip_limit=4.0, tile_grid_size=(8, 8), always_apply=False, p=0.5),
+                        #A.ColorJitter (brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5, always_apply=False, p=0.5),
+                        A.ShiftScaleRotate(border_mode=cv2.BORDER_CONSTANT, 
+                            scale_limit=0.3,
+                            rotate_limit=(0, max_angle),
+                            p=0.5)  
+                    ], 
+                    p=1
+                )
+        if sensor_type == 'altum':
+            self.transform = A.Compose([
+                        A.HorizontalFlip(p=0.5),
+                        A.GridDistortion(p=0.5),    
+                        A.RandomCrop(height=120, width=120, p=0.5),  
+                        A.Blur(blur_limit=7, always_apply=False, p=0.5),
+                        #A.CLAHE (clip_limit=4.0, tile_grid_size=(8, 8), always_apply=False, p=0.5),
+                        A.ColorJitter (brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5, always_apply=False, p=0.5),
+                        A.ShiftScaleRotate(border_mode=cv2.BORDER_CONSTANT, 
+                            scale_limit=0.3,
+                            rotate_limit=(0, max_angle),
+                            p=0.5)  
+                    ], 
+                    p=1
+                )
+                
 
     def __call__(self, bands, mask, ago_indices):
         
         transformed = self.transform(image = bands,mask = mask)
 
-        #n_band = bands.shape[0]
-        #rot_value       = random.randint(0,self.max_angle)
-        #rotated_bands   = ndimage.rotate(bands, rot_value, reshape=False)
-        #rotated_mask    = ndimage.rotate(mask, rot_value, reshape=False)
         rotated_bands = transformed['image']
         rotated_mask = transformed['mask']
 
@@ -277,14 +290,18 @@ class dataset_wrapper(greenAIDataStruct):
         #print(file)
         agro_indice = np.array([])
 
+        
+        
+
         if self.transform:
             img,mask,agro_indice = self.transform(img,mask,agro_indice)
 
+        
         img = preprocessing(img, self.color_value)
-            
-        #mask  = mask.transpose(2,0,1)
-        #input_bands = input_bands.transpose(2,0,1)
+
         mask = transforms.ToTensor()(mask)
+        img = transforms.ToTensor()(img)
+
         agro_indice = torch.from_numpy(agro_indice).type(torch.FloatTensor)
         #mask = torch.from_numpy(mask).type(torch.FloatTensor)
         #agro_indice = []
@@ -359,7 +376,7 @@ class dataset_loader():
 
         aug = None
         if augment == True:
-            aug = augmentation()
+            aug = augmentation(sensor)
         # Test set conditions
 
         test_cond = [True for name in testset if name in DATASET_NAMES]
