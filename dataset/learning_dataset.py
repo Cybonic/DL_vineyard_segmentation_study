@@ -45,6 +45,34 @@ def fetch_files(folder):
 
     return([f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))])
 
+def match_files(sub_raster_files,sub_mask_files):
+    #  use sub_raster as reference
+    matched_files = []
+    for img,msk in zip(sub_raster_files,sub_mask_files):
+        if img != msk:
+            matched_files.append(img)
+    #for file in sub_mask_files:
+    #    if file in sub_raster_files:
+    #        matched_files.append(file)
+    
+    return(matched_files)
+
+def get_files(dir):
+    '''
+    return files in a directory
+    @param dir (string) target direcotry
+    @retrun (list): list of files  
+    '''
+    if not os.path.isdir(dir):
+        return(list([]))
+
+    files = os.listdir(dir)
+    #if not end:
+    new_files = [f.split('.')[0] for f in files]
+    # Runs only when DEBUG FLAG == TRUE
+    t = files[0].split('.')[1]
+    return({'root':dir,'files':new_files,'file_type':t})
+
 def comp_agro_indices(bands, indices_to_compute):
 
     indices_to_use  = indices_to_compute
@@ -97,12 +125,10 @@ def split_data_plots(file_array):
     return(np.array(data_p_plots))
 
 
-def tiff2numpy(tiff):
-    return(np.array(tiff.values))
-
-
+def tif2pixel(array):
+    return(((array ** (1/2)) * 255).astype(np.uint8))
+   
 def load_file(file):
-
 
     if not os.path.isfile(file):
         return(ErrorReport)
@@ -113,11 +139,12 @@ def load_file(file):
         array = np.array(Image.open(file)).astype(np.uint8)
     elif file_type=='tif':
          raster = rioxarray.open_rasterio(file)
-         array = tiff2numpy(raster)
+         array  = tif2pixel(raster.values)
     elif(file_type=='png'):
         array = np.array(Image.open(file)).astype(np.uint8)
     else:
         array = np.load(file)
+        array  = tif2pixel(array)
 
     # Get the dim order right: C,H,W
     if array.shape[-1]>array.shape[0]:
@@ -135,17 +162,28 @@ class augmentation():
     def __init__(self,sensor_type,max_angle = MAX_ANGLE):
         self.max_angle =max_angle
         
-        
+        self.transform  = mytransform.Compose([
+                mytransform.ToTensor(),
+                mytransform.Adjust_Brightness(2),
+                mytransform.Adjust_Saturation(2),
+                mytransform.RandomHorizontalFlip(0.5),
+                mytransform.RandomRotate(0,180),
+                mytransform.Normalize(0,1),
+                
+            ])
+
+        '''
         if sensor_type == 'x7':
             # Color  related augmentations
             self.transform  = mytransform.Compose([
-                mytransform.CenterCrop(120),
+                mytransform.ToTensor(),
+                mytransform.CenterCrop(240),
                 mytransform.RandomHorizontalFlip(0.5),
                 mytransform.RandomRotate(0,180),
                 mytransform.Normalize(0,1)
 
             ])
-            '''
+            
             self.transform = A.Compose([
                         A.HorizontalFlip(p=0.5),
                         A.GridDistortion(p=0.5),    
@@ -160,7 +198,7 @@ class augmentation():
                     ], 
                     p=1
                 )
-            '''
+           
 
         if sensor_type == 'altum':
             self.transform = A.Compose([
@@ -177,12 +215,14 @@ class augmentation():
                     ], 
                     p=1
                 )
-                
+                 '''
 
     def __call__(self, bands, mask, ago_indices):
         
         #transformed = self.transform(image = bands,mask = mask)
-        rotated_bands,rotated_mask = self.transform(image = bands,target = mask)
+        rotated_bands,rotated_mask = self.transform(bands,mask)
+        rotated_bands = np.transpose(rotated_bands.numpy(),(1,2,0))
+        rotated_mask = np.transpose(rotated_mask.numpy(),(1,2,0))
         #rotated_bands = transformed['image']
         #rotated_mask = transformed['mask']
 
@@ -196,6 +236,11 @@ class augmentation():
         # Now we will create a pipe of transformations
         
 
+def build_global(file_structure):
+    files = file_structure['files']
+    root = file_structure['root']
+    file_type = file_structure['file_type']
+    return([os.path.join(root,f)+ '.' + file_type for f in files])
 
 class greenAIDataStruct():
     def __init__(self,root,vineyard_plot,sensor):
@@ -205,21 +250,40 @@ class greenAIDataStruct():
         # build absolut path 
         self.paths = [ os.path.join(root,p,sensor) for p in vineyard_plot]
 
-    def fetch_files(self,folder):
+    def fetch_files(self,path):
         image_array = np.array([])
         global_img_array = np.array([])
         
-        for path in self.paths:
-            path = os.path.join(path,folder)
-            if not os.path.isdir(path):
-                raise NameError("Data folders do not Exist!: " + path)
+        img_dir = os.path.join(path,'images')
+        mask_dir = os.path.join(path,'masks')
 
-            files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
-            global_files = [os.path.join(path,f) for f in files]  
-            image_array = np.append(image_array,files)
-            global_img_array = np.append(global_img_array,global_files)
+        
+        img_struct= get_files(img_dir)
+        msk_struct= get_files(mask_dir)
 
-        return(image_array,global_img_array)
+        img_files = img_struct['files']
+        mask_files = msk_struct['files']
+
+        imgs  = sorted(img_files)
+        masks = sorted(mask_files)
+
+        matches = match_files(imgs,masks)
+
+        if len(matches):
+            print("ERROR Files do not match:" + f'{matches}')
+        
+        g_im_files = build_global(img_struct)
+        g_mask_files = build_global(msk_struct)
+
+
+
+
+            #files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+            # global_files = [os.path.join(path,f) for f in files]  
+            #image_array = np.append(image_array,files)
+            #global_img_array = np.append(global_img_array,global_files)
+
+        return(g_im_files,g_mask_files)
 
     def fetch_imgs_files(self):
         return( self.fetch_files('images'))
@@ -229,23 +293,45 @@ class greenAIDataStruct():
     
     def get_data_files(self,path_type = 'global',fraction = None):
 
-        imgs,full_img_path = self.fetch_files('images')
-        masks,full_mask_path = self.fetch_files('masks')
+        img_file_list = []
+        mask_file_list = []
+        for path in self.paths:
+            img_files,mask_file = self.fetch_files(path)
+            img_file_list.extend(img_files)
+            mask_file_list.extend(mask_file)
+        
+        img_file_list = np.array(img_file_list)
+        mask_file_list = np.array(mask_file_list)
+
+        '''
+        
+        imgs = imgs_struct['files']
+        masks = masks_struct['files']
+
+        imgs  = sorted(imgs)
+        masks = sorted(masks)
+
+        matches = match_files(imgs,masks)
 
         if path_type == 'global':
-            imgs = full_img_path
-            masks = full_mask_path
-        
+            imgs = imgs_struct['root']
+            masks = masks_struct['root']
+        '''
         if fraction != None and fraction > 0 and fraction <1:
-            n_samples = len(imgs)
-            n_select_samples = int(round(fraction*n_samples,0))
+            n_samples = len(img_file_list)
+            mask_n_sample = len(mask_file_list)
+            n_select_samples = int(fraction*n_samples)
             # Generate linear indices 
             setp =int(n_samples/n_select_samples)
             select_samples_idx = np.array(range(0, n_samples,setp))
-            imgs = imgs[select_samples_idx]
-            masks = masks[select_samples_idx]
+            if select_samples_idx.max()>mask_n_sample or \
+                select_samples_idx.max()>n_samples:
+                raise ValueError("[Fraction] indices do not match")
+
+            img_file_list = img_file_list[select_samples_idx]
+            mask_file_list = mask_file_list[select_samples_idx]
             
-        return({'imgs':imgs,'masks':masks})
+        return({'imgs':img_file_list,'masks':mask_file_list})
 
     def load_data_to_RAM(self,data):
            
@@ -270,13 +356,14 @@ class greenAIDataStruct():
             # data is already loaded in RAM
             img = self.imgs[itr]
             mask = self.masks[itr]
+            name = ''
         else: 
             img_file = self.imgs[itr]
             mask_file = self.masks[itr]
             
             img,name = self.load_im(img_file)
             mask,name = self.load_bin_mask(mask_file)
-        return(img,mask)
+        return(img,mask,name)
 
 
 class dataset_wrapper(greenAIDataStruct):
@@ -299,8 +386,8 @@ class dataset_wrapper(greenAIDataStruct):
         self.transform  =   transform
         self.sensor     =   sensor
 
-
         self.data   = self.get_data_files(fraction=fraction)
+
         if savage_mode:
             self.data = self.load_data_to_RAM(self.data )
             
@@ -312,16 +399,14 @@ class dataset_wrapper(greenAIDataStruct):
 
     def __getitem__(self,itr):
 
-        img,mask = self.load_data(itr)
+        img,mask,name = self.load_data(itr)
         #print(file)
         agro_indice = np.array([])
-
 
         if self.transform:
             img,mask,agro_indice = self.transform(img,mask,agro_indice)
 
-        
-        img = preprocessing(img, self.color_value)
+        #img = preprocessing(img, self.color_value)
 
         mask = transforms.ToTensor()(mask)
         img = transforms.ToTensor()(img)
@@ -333,7 +418,7 @@ class dataset_wrapper(greenAIDataStruct):
         path_name = self.paths[0] 
     
         
-        batch = {'bands':img,'mask':mask,'indices':agro_indice,'name':'','path':path_name}
+        batch = {'bands':img,'mask':mask,'indices':agro_indice,'name':name,'path':path_name}
         # Convert to tensor
         return(batch)
     
