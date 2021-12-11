@@ -79,7 +79,8 @@ DEPLOY_PARAMETERS = {
 'TEMP_SESSION': 'temp',
 'AUGMENT': True,
 'FRACTION': 1,
-'USE_PRETRAINED': True
+'USE_PRETRAINED': False,
+'SAVE_PRETRAINED': True
 }
 
 def UpdateSession(sessionfilepath,**arg):
@@ -103,6 +104,7 @@ def UpdateSession(sessionfilepath,**arg):
     session_settings['network']['model'] = network
     session_settings['network']['index']['NDVI'] = False
     session_settings['network']['pretrained']['use'] = arg['USE_PRETRAINED']
+    session_settings['network']['pretrained']['save'] = arg['SAVE_PRETRAINED']
     session_settings['network']['pretrained']['path'] = os.path.join(sessionfilepath,t)
     session_settings['max_epochs']= arg['MAX_EPOCH']
     session_settings['report_val']= arg['VAL_EPOCH'] 
@@ -153,6 +155,7 @@ if __name__ == '__main__':
     networks = ['segnet','unet_bn','modsegnet']
     #networks = ['segnet']
     tx = ['t1','t2','t3']
+
 
     
     t = 't1' 

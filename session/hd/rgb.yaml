@@ -34,6 +34,7 @@ network:
     NDVI: False
   pretrained: 
     use: True
+    save: True
     path: 'checkpoints/hd'
     file: 'best'
 # training parameters

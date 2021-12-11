@@ -32,8 +32,9 @@ network:
 
   pretrained: 
     use: False
+    save: False
     path: 'checkpoints\t1\ms'
-    file: 're_nir_segnet_best'
+    file: 'best'
 # training parameters
 max_epochs: 100
 report_val: 5

@@ -78,7 +78,7 @@ def network_wrapper(session_settings,pretrained_file= None):
   #    count = count +1
 
   model = OrthoSeg(network_param,image_shape,channels=count,drop_rate = drop_rate)
-  root = os.path.join('checkpoints',model_name,pretrained_path,)
+  root = os.path.join('checkpoints',model_name,pretrained_path)
 
   if pretrained_flag == True:
     
@@ -416,7 +416,7 @@ if __name__ == '__main__':
     print("[INF] CTR + C")
   
   #Save best model 
-  if session_settings['network']['pretrained']['use'] == True: 
+  if session_settings['network']['pretrained']['save'] == True: 
     
     destination = os.path.join(
                     pretrained_path,
