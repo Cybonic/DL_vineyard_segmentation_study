@@ -96,6 +96,7 @@ class CenterCrop:
     def __init__(self, size):
         self.size = size
 
+
     def __call__(self, image, target):
         image = F.center_crop(image, self.size)
         target = F.center_crop(target, self.size)
@@ -138,7 +139,9 @@ class Adjust_Saturation:
 class Adjust_Brightness:
     def __init__(self,brightness_factor = 3):
         self.brightness_factor = brightness_factor
+        array = np.array(range(0,self.brightness_factor))
     def __call__(self,image,target):
+    
         image = F.adjust_brightness(image,self.brightness_factor)
         return(image,target)
 

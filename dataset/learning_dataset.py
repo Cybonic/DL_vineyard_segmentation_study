@@ -155,6 +155,7 @@ def load_file(file):
     return(array,name)
 
 
+
 class augmentation():
     split_idx = 0
     # https://datamahadev.com/performing-image-augmentation-using-pytorch/
@@ -164,8 +165,8 @@ class augmentation():
         
         self.transform  = mytransform.Compose([
                 mytransform.ToTensor(),
-                mytransform.Adjust_Brightness(2),
-                mytransform.Adjust_Saturation(2),
+                mytransform.Adjust_Brightness(1),
+                #mytransform.Adjust_Saturation(2),
                 mytransform.RandomHorizontalFlip(0.5),
                 mytransform.RandomRotate(0,180),
                 mytransform.Normalize(0,1),

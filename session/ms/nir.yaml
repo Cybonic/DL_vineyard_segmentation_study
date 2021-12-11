@@ -2,17 +2,19 @@
 device: 'cuda:0'
 name: 'nir'  
 # dataset ['esac1','esac2','valdo']
+run: "nir"
 dataset:
-  name: Multispectral 
+  name: altum 
   DESKTOP-SSEDT6V: 'E:\Dataset\greenAI\learning'
   DESKTOP-5V7R599: 'D:\OneDrive - isr.uc.pt\Datasets\greenAI\learning'
-  train: ['esac1','esac2']
-  test:  ['valdoeiro']
+  train: ['esac','valdoeiro']
+  test:  ['qtabaixo']
   loader:
     shuffle: False
     batch_size: 1
     workers: 1 
-  augment: False  
+  augment: False
+  fraction: 0.2  
 # Model to be loaded
 network: 
   model: 'segnet'

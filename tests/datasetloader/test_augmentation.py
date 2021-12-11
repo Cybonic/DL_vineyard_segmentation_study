@@ -20,9 +20,9 @@ from dataset.learning_dataset import dataset_wrapper,augmentation
 
 HEIGHT = 240
 WIDTH = 240
-BATCH_SIZE = 1
+BATCH_SIZE = 5
 MAX_EPOCH = 20
-DATASET = 'valdoeiro'
+DATASET = ['qtabaixo']
 
 def image_generator(height,width,batch,n_batches):
 
@@ -104,23 +104,25 @@ def test_tf_writer_on_synthetic_data(writer,images,signals,mode)-> bool:
 if __name__ == '__main__':
     
 
-    RANDOM = "TEST_AUG2"
+    RANDOM = "TEST_AUG5"
     name = ''.join([DATASET,'h',str(HEIGHT),'w',str(WIDTH),'b',str(BATCH_SIZE),'e',str(MAX_EPOCH),])
 
     images,signals = synthetic_data_generator()
     
-    writer = tf_writer.writer(os.path.join('results',name + RANDOM),mode=['train','val','dataset'])
+    writer = tf_writer.writer(os.path.join('saved',name + RANDOM),mode=['train','val','dataset'])
 
     #test_tf_writer_on_synthetic_data(writer,images,signals,'train')
     #test_tf_writer_on_synthetic_data(writer,images,signals,'val')
 
 
-    root = '/home/tiago/desktop_home/workspace/dataset/learning'
+    root = 'samples'
     sensor = 'x7'
     bands = ['R','G','B']
     augment = False
-    set = [DATASET]
-    aug = augmentation()
+    set = DATASET
+    aug = augmentation(sensor_type = sensor)
+  
+
 
     dataset= dataset_wrapper(
                           root,

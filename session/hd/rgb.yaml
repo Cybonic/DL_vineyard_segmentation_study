@@ -1,14 +1,15 @@
 
 device: 'cuda:1'
-name: 'hd_rbg'  
+name: 'hd_rbg' 
+run: 'hd'
 # dataset ['esac1','esac2','valdo']
 dataset:
   name: x7 
   #root: '/home/tiago/remote_dataset/dataset/greenAI/learning/'
   root: /home/tiago/big/dataset/greenAI/learning/
   #DESKTOP-5V7R599: 'D:\OneDrive - isr.uc.pt\Datasets\greenAI\learning'
-  train: ['esac']
-  test:  ['valdoeiro']
+  train: ['esac','valdoeiro']
+  test:  ['qtabaixo']
   #train: ['esac1','esac2']
   #test:  [qtabaixo,'valdoeiro']
   fraction: 1

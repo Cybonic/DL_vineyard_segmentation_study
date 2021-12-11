@@ -52,7 +52,7 @@ CMD = 'python3'
 PLOT_FLAG = 0
 
 
-LR_RANGE= [0.00001,0.0001,0.001,0.01,0.1]
+
 
 TEST_PARAMETERS = {
 'LEARNING_RATE': 0.0001,
@@ -79,7 +79,7 @@ DEPLOY_PARAMETERS = {
 'TEMP_SESSION': 'temp',
 'AUGMENT': True,
 'FRACTION': 1,
-'USE_PRETRAINED': False
+'USE_PRETRAINED': True
 }
 
 def UpdateSession(sessionfilepath,**arg):
@@ -136,11 +136,12 @@ def UpdateSession(sessionfilepath,**arg):
 
 if __name__ == '__main__':
     
-    NAME = 'ms/new_aug'
+    NAME = 'ms/wd_study'
     
     pc_name = platform.node()
     print("[INFO][SCRIPT] "+ pc_name)
 
+    WD_RANGE= [0.000001,0.00001,0.0001,0.001,0.01]
 
     if pc_name == 'tiago-lp': # Laptop (Testing)
         parameters = TEST_PARAMETERS
@@ -158,10 +159,10 @@ if __name__ == '__main__':
     for i in range(1):
         for network in networks:    
         #for t in tx:
-            #for lr in LR_RANGE:
+            for wd in WD_RANGE:
                 #print("[INFO][SCRIPT] Cycle: %f"%(lr))
                 parameters['LEARNING_RATE'] = LR[network]
-                parameters['WEIGHT_DECAY'] = WD[network]
+                parameters['WEIGHT_DECAY'] = wd
                 
                 ms_session_root = 'ms'
                 parameters['SENSOR'] = 'altum' 

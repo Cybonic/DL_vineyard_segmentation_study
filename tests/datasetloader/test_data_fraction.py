@@ -60,21 +60,21 @@ def test_data_bounderies(dataset,lower_bound=0,upper_bound=1):
 if __name__ == '__main__':
 
   
-  root = 'samples'
-  sensor = 'altum'
+  root = '/home/tiago/desktop_home/workspace/dataset/learning/'
+  sensor = 'x7'
   bands = ['nir']
   augment = False
-  set = ['valdoeiro']
+  set = ['valdoeiro','esac']
 
   dataset= dataset_wrapper(
                         root,
                         set,
                         sensor, 
-                        bands = {'NIR':True}, 
+                        bands = {'R':True,'G':True,'B':True}, 
                         agro_index = {'NDVI':False}, 
                         transform = None, 
                         path_type='global',
-                        fraction = 1)
+                        fraction = 0.1)
   
   print("Sets:"+f'{dataset.plot}')
   print("Sensor:" + dataset.sensor)

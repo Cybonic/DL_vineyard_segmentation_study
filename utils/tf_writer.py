@@ -28,10 +28,6 @@ def build_tb_frame(img,mask,pred):
     if not isinstance(pred,np.ndarray):
       pred = pred.data.cpu().numpy()
 
-    #print(img.shape)
-    #print(mask.shape)
-    #print(pred.shape)
-
     val_visual = [[i.data.cpu(), j, k] for i, j, k in zip(img, mask, pred)]
     val_img = []
     for imgs in val_visual:

@@ -5,7 +5,7 @@ name: 'dev'
 run: 'dev'
 dataset:
   root: samples
-  name: x7   
+  name: altum   
   train: [qtabaixo]
   test:  ['qtabaixo']
   loader:
@@ -21,11 +21,11 @@ network:
   input_shape: [240,240]
   drop_rate: 0.5
   bands:
-    R: True
-    G: True
-    B: True
+    R: False
+    G: False
+    B: False
     RE: False
-    NIR: False 
+    NIR: True 
     thermal: False
   index:
     NDVI: False

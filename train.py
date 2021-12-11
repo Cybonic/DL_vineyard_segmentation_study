@@ -78,7 +78,7 @@ def network_wrapper(session_settings,pretrained_file= None):
   #    count = count +1
 
   model = OrthoSeg(network_param,image_shape,channels=count,drop_rate = drop_rate)
-  root = os.path.join(model_name,pretrained_path,)
+  root = os.path.join('checkpoints',model_name,pretrained_path,)
 
   if pretrained_flag == True:
     
@@ -212,6 +212,8 @@ if __name__ == '__main__':
       '--data_root', '-r',
       type=str,
       required=False,
+      #default='/home/tiago/learning',
+      #default='/home/tiago/desktop_home/workspace/dataset/learning'
       default='/home/tiago/workspace/dataset/learning',
       #default='samples',
       help='Directory to get the trained model.'
@@ -230,8 +232,8 @@ if __name__ == '__main__':
       '--session', '-f',
       type=str,
       required=False,
-      #default='hd/rgb',
-      default='dev',
+      default='hd/rgb',
+      #default='dev',
       help='Directory to get the trained model.'
   )
 
@@ -293,7 +295,7 @@ if __name__ == '__main__':
   model, pretrained_path, device = network_wrapper(session_settings)
   # Load dataset 
   # Get train and val loaders
-  train_loader, val_loader = dataset_loader_wrapper(root,session_settings,savage_mode =1)
+  train_loader, val_loader = dataset_loader_wrapper(root,session_settings,savage_mode =0)
   # Set the loss function
    
   optimizer, criterion = load_optimizer_wrapper(model,session_settings)

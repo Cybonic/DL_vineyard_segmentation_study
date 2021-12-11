@@ -8,7 +8,7 @@ class saver():
         self.name = arg['file']
         self.write_flag = 'a' # Append information to the existing file
         if not os.path.isdir(self.result_dir ):
-            os.mkdir(self.result_dir )
+            os.makedirs(self.result_dir )
 
         self.result_file = os.path.join(self.result_dir,self.name  + '.txt')
         
