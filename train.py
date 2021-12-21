@@ -21,6 +21,7 @@ import numpy as np
 from torch.utils import tensorboard
 from PIL import Image
 from utils import tf_writer
+from utils import segment_metrics as seg_metrics
 # from utils import train_utils as loss
 np.seterr(divide='ignore', invalid='ignore')
 # from torch.utils.tensorboard import SummaryWriter
@@ -40,7 +41,7 @@ from torch import nn
 from networks.orthoseg import OrthoSeg 
 from utils.saver import saver 
 # from inference import eval_net
-from inference import eval_net
+from inference import eval_net,rebuild_ortho
 from inference import logit2label
 from inference import evaluation
 import platform
@@ -96,6 +97,7 @@ def network_wrapper(session_settings,pretrained_file= None):
   device = 'cpu'
   if torch.cuda.is_available():
     device = 'cuda:0'
+    device = session_settings['device']
     torch.cuda.empty_cache()
 
   model.to(device)
@@ -176,9 +178,9 @@ def load_optimizer_wrapper(model,parameters):
   optimizer = optim.AdamW(
               model.parameters(), 
               lr = lr,
-              weight_decay=w_decay
+              weight_decay=w_decay,
               # eps = epsilon,
-              # amsgrad = amsgrad,
+              amsgrad = amsgrad,
               # betas = betas,
               )
 
@@ -192,9 +194,8 @@ def load_optimizer_wrapper(model,parameters):
 
   # The imbalance of the dataset is in mean 5 negatives for 1 positive, both for HD and MS
   pos_weight =  torch.tensor([5]) 
-  #criterion_weighted = loss.dice_loss()
-  #criterion_weighted = loss.GDiceLoss()
-  criterion_weighted = nn.BCEWithLogitsLoss(pos_weight=pos_weight) 
+  criterion_weighted = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+  #criterion_weighted = nn.BCEWithLogitsLoss() 
   # https://pytorch.org/docs/stable/generated/torch.nn.BCEWithLogitsLoss.html
   
   return(optimizer, criterion_weighted)
@@ -269,7 +270,6 @@ if __name__ == '__main__':
       help='Directory to get the trained model.'
   )
 
-
   FLAGS, unparsed = parser.parse_known_args()
 
 
@@ -310,7 +310,7 @@ if __name__ == '__main__':
   #os.makedirs('log')
 
   writer = tf_writer.writer(writer_path,mode= ['train','val'])
-
+  seg_scores = seg_metrics.compute_scores()
   epochs    = session_settings['max_epochs']
   VAL_EPOCH = session_settings['report_val']
 
@@ -325,7 +325,10 @@ if __name__ == '__main__':
   print("[INF] Writer: " + writer_name)
   print("--------------------------------------------------------\n")
 
-  
+  prediction_mask_bundle = []
+  mask_to_disply = []
+  indice_to_save= random.randint(0, epochs)
+
   global_val_score = {'f1':-1,'epoch':0,'model':''} # keeps the best values
   try:
     for epoch in range(epochs):
@@ -338,7 +341,7 @@ if __name__ == '__main__':
       masks = []
       preds = []
 
-      for batch in tqdm.tqdm(train_loader):
+      for i,batch in tqdm.tqdm(enumerate(train_loader)):
         model.train()
 
         img  = batch['bands']
@@ -358,47 +361,49 @@ if __name__ == '__main__':
         running_loss += loss
         if torch.isnan(loss_torch):
           print("[WARN] WARNING NAN")
-      
-        # Stack to evaluate later
-        pred_mask = logit2label(pred_mask,0.5) # Input (torch) output (numpy)
-        mask = mask.cpu().detach().numpy()
+
+        bin_pred_mask = logit2label(pred_mask.detach(),0.5)
         
-        masks.append(mask.flatten())
-        preds.append(pred_mask.flatten())
+        masks.append(mask.detach().cpu().numpy().flatten())
+        preds.append(bin_pred_mask.flatten())
         # Plotting 
       
       Y = np.concatenate(masks, axis=None)
       PREDS = np.concatenate(preds, axis=None)
-
       scores = evaluation(Y,PREDS)
-
+      epoch_f1  = scores['f1']
+      #epoch_f1 = seg_scores.get_f1()
       train_loss = running_loss/len(train_loader)
       
-      tb_frame = tf_writer.build_tb_frame(img,mask,pred_mask)
+      tb_frame = tf_writer.build_tb_frame(img,mask,bin_pred_mask)
       writer.add_image(tb_frame,epoch,'train')
-      writer.add_f1(scores['f1'],epoch,'train')
+      writer.add_f1(epoch_f1,epoch,'train')
+      #writer.add_f1(scores['f1'],epoch,'train')
       writer.add_loss(train_loss,epoch,'train')
 
       #writer.add_scalar('Loss/train', train_loss, epoch)
-      print("[INF|Train] epoch : {}/{}, loss: {:.6f} f1: {:.3f}".format(epoch, epochs, train_loss,scores['f1']))
+      print("[INF|Train] epoch : {}/{}, loss: {:.6f} f1: {:.3f}".format(epoch, epochs, train_loss,epoch_f1))
       
 
       if epoch % VAL_EPOCH == 0:
         # Compute valuation
-        metric = eval_net(model,val_loader,device,criterion,writer,epoch) 
-  
+        metric,prediction_masks,dataset_name = eval_net(model,val_loader,device,criterion,writer,epoch) 
+
         print("[INF|Test] Mean Loss %0.2f Mean f1 %0.2f"%(metric['val_loss'],metric['f1']))
         # writer.add_scalar('f1/test', metric['f1'], epoch)
         if metric['f1'] > global_val_score['f1']:
           
+          name = '%s_f1_%02.2f.pth'%(dataset_name,(metric['f1']*100)) 
+          ortho_mask = rebuild_ortho(prediction_masks,'predictions',name)
+          #writer.add_orthomask(ortho_mask,epoch,'val')
           # Overwite
           global_val_score  = metric
           global_val_score['train_loss'] = train_loss
           global_val_score['epoch'] = epoch
          
-          if session_settings['network']['pretrained']['use'] == True: 
+          if session_settings['network']['pretrained']['save'] == True: 
             # model name
-            trained_model_name = '%s_f1_%02d.pth'%(session_name,(metric['f1']*100)) 
+            trained_model_name = '%s_f1_%03d.pth'%(session_name,(metric['f1']*100)) 
             # build model path
             checkpoint_dir = os.path.join(pretrained_path,'all')
             if not os.path.isdir(checkpoint_dir):

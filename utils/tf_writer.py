@@ -60,6 +60,12 @@ class writer():
   def add_f1(self,value,step,mode='train'):
     self._add_scalar('f1',value,step,mode=mode)
   
+  def add_orthomask(self,value,step,mode='train'):
+    value_tensor = viz_transform(value)
+    #self.add_image(f'{mode}/ortho',step,value)
+    self.writer.add_image(f'{mode}/ortho', value_tensor, step)
+
+
   def add_image(self,img_frame,step,mode='train'):
     # build frame
     if not mode in self.mode:

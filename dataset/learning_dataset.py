@@ -26,14 +26,12 @@ import torch.utils.data as torch_utils
 import rioxarray
 from PIL import Image
 from torchvision import transforms
-from tqdm import tqdm
-import dataset.transforms as mytransform
 
 
-import cv2 
+
 
 MAX_ANGLE = 180
-band_to_indice = {'R':0,'G':1,'B':2,'RE':3,'NIR':4,'thermal':5}
+band_to_indice = {'B':0,'G':1,'R':2,'RE':3,'NIR':4,'thermal':5}
 dataset_label_to_indice = {'esac1':'esac1','esac2':'esac2','valdo':'valdoeiro'}
 DATASET_NAMES = ['valdoeiro','esac','qtabaixo']
 
@@ -124,27 +122,25 @@ def split_data_plots(file_array):
         data_p_plots.append(np.array(file_array)[indx])
     return(np.array(data_p_plots))
 
-
 def tif2pixel(array):
-    return(((array ** (1/2)) * 255).astype(np.uint8))
+    return(((array ** (1/3)) * 255).astype(np.uint8))
    
 def load_file(file):
 
     if not os.path.isfile(file):
-        return(ErrorReport)
-    
+        return(ValueError)
     file_type = file.split('.')[-1]
 
     if file_type=='tiff':
         array = np.array(Image.open(file)).astype(np.uint8)
     elif file_type=='tif':
-         raster = rioxarray.open_rasterio(file)
-         array  = tif2pixel(raster.values)
+         gbr_raster = rioxarray.open_rasterio(file)
+         array = gbr_raster.values
     elif(file_type=='png'):
         array = np.array(Image.open(file)).astype(np.uint8)
     else:
         array = np.load(file)
-        array  = tif2pixel(array)
+  
 
     # Get the dim order right: C,H,W
     if array.shape[-1]>array.shape[0]:
@@ -155,93 +151,13 @@ def load_file(file):
     return(array,name)
 
 
-
-class augmentation():
-    split_idx = 0
-    # https://datamahadev.com/performing-image-augmentation-using-pytorch/
-    # https://medium.com/pytorch/multi-target-in-albumentations-16a777e9006e
-    def __init__(self,sensor_type,max_angle = MAX_ANGLE):
-        self.max_angle =max_angle
         
-        self.transform  = mytransform.Compose([
-                mytransform.ToTensor(),
-                mytransform.Adjust_Brightness(1),
-                #mytransform.Adjust_Saturation(2),
-                mytransform.RandomHorizontalFlip(0.5),
-                mytransform.RandomRotate(0,180),
-                mytransform.Normalize(0,1),
-                
-            ])
-
-        '''
-        if sensor_type == 'x7':
-            # Color  related augmentations
-            self.transform  = mytransform.Compose([
-                mytransform.ToTensor(),
-                mytransform.CenterCrop(240),
-                mytransform.RandomHorizontalFlip(0.5),
-                mytransform.RandomRotate(0,180),
-                mytransform.Normalize(0,1)
-
-            ])
-            
-            self.transform = A.Compose([
-                        A.HorizontalFlip(p=0.5),
-                        A.GridDistortion(p=0.5),    
-                        A.RandomCrop(height=120, width=120, p=0.5),  
-                        A.Blur(blur_limit=7, always_apply=False, p=0.5),
-                        A.CLAHE (clip_limit=4.0, tile_grid_size=(8, 8), always_apply=False, p=0.5),
-                        #A.ColorJitter (brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5, always_apply=False, p=0.5),
-                        A.ShiftScaleRotate(border_mode=cv2.BORDER_CONSTANT, 
-                            scale_limit=0.3,
-                            rotate_limit=(0, max_angle),
-                            p=0.5)  
-                    ], 
-                    p=1
-                )
-           
-
-        if sensor_type == 'altum':
-            self.transform = A.Compose([
-                        A.HorizontalFlip(p=0.5),
-                        A.GridDistortion(p=0.5),    
-                        A.RandomCrop(height=120, width=120, p=0.5),  
-                        A.Blur(blur_limit=7, always_apply=False, p=0.5),
-                        #A.CLAHE (clip_limit=4.0, tile_grid_size=(8, 8), always_apply=False, p=0.5),
-                        A.ColorJitter (brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5, always_apply=False, p=0.5),
-                        A.ShiftScaleRotate(border_mode=cv2.BORDER_CONSTANT, 
-                            scale_limit=0.3,
-                            rotate_limit=(0, max_angle),
-                            p=0.5)  
-                    ], 
-                    p=1
-                )
-                 '''
-
-    def __call__(self, bands, mask, ago_indices):
-        
-        #transformed = self.transform(image = bands,mask = mask)
-        rotated_bands,rotated_mask = self.transform(bands,mask)
-        rotated_bands = np.transpose(rotated_bands.numpy(),(1,2,0))
-        rotated_mask = np.transpose(rotated_mask.numpy(),(1,2,0))
-        #rotated_bands = transformed['image']
-        #rotated_mask = transformed['mask']
-
-        # if not isinstance(ago_indices,(np.ndarray, np.generic)):
-        if  ago_indices is not None and ago_indices.size >0:
-            rotated_ago_indices = ndimage.rotate(ago_indices, rot_value, reshape=False)
-        else: 
-            rotated_ago_indices = ago_indices
-
-        return(rotated_bands,rotated_mask,rotated_ago_indices) 
-        # Now we will create a pipe of transformations
-        
-
 def build_global(file_structure):
     files = file_structure['files']
     root = file_structure['root']
     file_type = file_structure['file_type']
     return([os.path.join(root,f)+ '.' + file_type for f in files])
+
 
 class greenAIDataStruct():
     def __init__(self,root,vineyard_plot,sensor):
@@ -262,6 +178,9 @@ class greenAIDataStruct():
         img_struct= get_files(img_dir)
         msk_struct= get_files(mask_dir)
 
+        if len(img_struct)==0 or len(msk_struct)==0 :
+            raise NameError
+
         img_files = img_struct['files']
         mask_files = msk_struct['files']
 
@@ -275,14 +194,6 @@ class greenAIDataStruct():
         
         g_im_files = build_global(img_struct)
         g_mask_files = build_global(msk_struct)
-
-
-
-
-            #files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
-            # global_files = [os.path.join(path,f) for f in files]  
-            #image_array = np.append(image_array,files)
-            #global_img_array = np.append(global_img_array,global_files)
 
         return(g_im_files,g_mask_files)
 
@@ -304,20 +215,6 @@ class greenAIDataStruct():
         img_file_list = np.array(img_file_list)
         mask_file_list = np.array(mask_file_list)
 
-        '''
-        
-        imgs = imgs_struct['files']
-        masks = masks_struct['files']
-
-        imgs  = sorted(imgs)
-        masks = sorted(masks)
-
-        matches = match_files(imgs,masks)
-
-        if path_type == 'global':
-            imgs = imgs_struct['root']
-            masks = masks_struct['root']
-        '''
         if fraction != None and fraction > 0 and fraction <1:
             n_samples = len(img_file_list)
             mask_n_sample = len(mask_file_list)
@@ -407,19 +304,16 @@ class dataset_wrapper(greenAIDataStruct):
         if self.transform:
             img,mask,agro_indice = self.transform(img,mask,agro_indice)
 
-        #img = preprocessing(img, self.color_value)
+        img = preprocessingv2(img, self.color_value)
 
         mask = transforms.ToTensor()(mask)
-        img = transforms.ToTensor()(img)
+        img  = transforms.ToTensor()(img)
 
-        agro_indice = torch.from_numpy(agro_indice).type(torch.FloatTensor)
-        #mask = torch.from_numpy(mask).type(torch.FloatTensor)
-        #agro_indice = []
+        #agro_indice = torch.from_numpy(agro_indice).type(torch.FloatTensor)
         
         path_name = self.paths[0] 
     
-        
-        batch = {'bands':img,'mask':mask,'indices':agro_indice,'name':name,'path':path_name}
+        batch = {'bands':img,'mask':mask,'indices':[],'name':name,'path':path_name}
         # Convert to tensor
         return(batch)
     
@@ -429,9 +323,14 @@ class dataset_wrapper(greenAIDataStruct):
     def load_im(self,file):
         #print("Image: " + file)
         array,name = load_file(file)
-        bands_idx = [band_to_indice[key] for key,value in self.bands_to_use.items() if value == True]
-        array =  array[:,:,bands_idx]
-        
+        if self.sensor == 'altum': # Multispectral bands
+            bands_idx = [band_to_indice[key] for key,value in self.bands_to_use.items() if value == True]
+            array =  array[:,:,bands_idx]
+            array  = tif2pixel(array)
+        else: # HD
+            bands_idx = [0,1,2]
+            array =  array[:,:,bands_idx]
+   
         return(array,name)
 
     def load_bin_mask(self,file):
@@ -486,7 +385,7 @@ class dataset_loader():
 
         aug = None
         if augment == True:
-            aug = augmentation(sensor)
+            aug = rgb_augmentation(sensor)
         # Test set conditions
 
         test_cond = [True for name in testset if name in DATASET_NAMES]
@@ -494,25 +393,40 @@ class dataset_loader():
         if test_cond:
         
             # test loader
-            self.test  = dataset_wrapper(root,testset, sensor,bands,fraction = fraction['train'],savage_mode=savage_mode)
+            self.test  = dataset_wrapper(   root,
+                                            testset, 
+                                            sensor,
+                                            bands,
+                                            fraction = fraction['train'],
+                                            savage_mode=savage_mode
+                                        )
 
             self.test_loader = DataLoader(  self.test,
-                                    batch_size = self.batch_size,
-                                    shuffle = False,
-                                    num_workers = self.workers,
-                                    pin_memory=False)
+                                            batch_size = 1,
+                                            shuffle = False,
+                                            num_workers = self.workers,
+                                            pin_memory=False
+                                        )
 
 
         train_cond = [True for name in trainset if name in DATASET_NAMES]
         
         if train_cond:
-            self.train  = dataset_wrapper(root,trainset, sensor,bands, transform = aug,fraction = fraction['train'],savage_mode=savage_mode)
+            self.train  = dataset_wrapper(root,
+                                        trainset, 
+                                        sensor,
+                                        bands, 
+                                        transform = aug,
+                                        fraction = fraction['train'],
+                                        savage_mode=savage_mode
+                                        )
             # Train loader
-            self.train_loader = DataLoader(  self.train,
-                                        batch_size = self.batch_size,
-                                        shuffle = self.shuffle,
-                                        num_workers = self.workers,
-                                        pin_memory=False)
+            self.train_loader = DataLoader( self.train,
+                                            batch_size = self.batch_size,
+                                            shuffle = self.shuffle,
+                                            num_workers = self.workers,
+                                            pin_memory=False
+                                        )
         
 
 
@@ -664,6 +578,25 @@ def TEST_NDVI(root,fraction=0.5):
 
 
 
+'''
+        if sensor_type == 'altum':
+            self.transform = A.Compose([
+                        A.HorizontalFlip(p=0.5),
+                        A.GridDistortion(p=0.5),    
+                        A.RandomCrop(height=120, width=120, p=0.5),  
+                        A.Blur(blur_limit=7, always_apply=False, p=0.5),
+                        #A.CLAHE (clip_limit=4.0, tile_grid_size=(8, 8), always_apply=False, p=0.5),
+                        A.ColorJitter (brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5, always_apply=False, p=0.5),
+                        A.ShiftScaleRotate(border_mode=cv2.BORDER_CONSTANT, 
+                            scale_limit=0.3,
+                            rotate_limit=(0, max_angle),
+                            p=0.5)  
+                    ], 
+                    p=1
+                )
+
+
+'''
 
 if __name__ == '__main__':
     root = 'E:\Dataset\greenAI\learning'

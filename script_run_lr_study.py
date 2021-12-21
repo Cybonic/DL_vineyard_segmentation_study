@@ -24,7 +24,7 @@ TEST = {'t1':['qtabaixo'],
 
 ms_files = [
             #'all',
-            #'rgb',
+            'rgb',
             #'re',
             'nir'
             #'thermal',
@@ -52,7 +52,7 @@ CMD = 'python3'
 PLOT_FLAG = 0
 
 
-LR_RANGE= [0.00001,0.0001,0.001,0.01,0.1]
+
 
 TEST_PARAMETERS = {
 'LEARNING_RATE': 0.0001,
@@ -64,13 +64,14 @@ TEST_PARAMETERS = {
 'amsgrad': False,
 'TEMP_SESSION': 'temp',
 'AUGMENT': True,
-'FRACTION': 1,
-'USE_PRETRAINED': False
+'FRACTION': 0.01,
+'USE_PRETRAINED': False,
+'SAVE_PRETRAINED':True
 }
 
 DEPLOY_PARAMETERS = {
 'LEARNING_RATE': 0.0001,
-'WEIGHT_DECAY':  0,
+'WEIGHT_DECAY':  0.00001,
 'BATCH_SIZE':  5,
 'SHUFFLE':  True,
 'MAX_EPOCH': 50,
@@ -79,8 +80,10 @@ DEPLOY_PARAMETERS = {
 'TEMP_SESSION': 'temp',
 'AUGMENT': True,
 'FRACTION': 1,
-'USE_PRETRAINED': False
+'USE_PRETRAINED': False,
+'SAVE_PRETRAINED': True
 }
+
 
 def UpdateSession(sessionfilepath,**arg):
 
@@ -103,6 +106,7 @@ def UpdateSession(sessionfilepath,**arg):
     session_settings['network']['model'] = network
     session_settings['network']['index']['NDVI'] = False
     session_settings['network']['pretrained']['use'] = arg['USE_PRETRAINED']
+    session_settings['network']['pretrained']['save'] = arg['SAVE_PRETRAINED']
     session_settings['network']['pretrained']['path'] = os.path.join(sessionfilepath,t)
     session_settings['max_epochs']= arg['MAX_EPOCH']
     session_settings['report_val']= arg['VAL_EPOCH'] 
@@ -117,8 +121,8 @@ def UpdateSession(sessionfilepath,**arg):
     session_settings['dataset']['name'] = arg['SENSOR']
     session_settings['dataset']['fraction']= arg['FRACTION']
     session_settings['saver']['file'] = session_settings['network']['model'] + '_' + t
-    session_settings['saver']['result_dir']= os.path.join('results',NAME)
-    session_settings['run'] = NAME
+    session_settings['saver']['result_dir']= os.path.join('results',arg['RUN'])
+    session_settings['run'] = arg['RUN']
 
 
     sesson_name = '_'.join(sessionfilepath.split(os.sep))
@@ -136,11 +140,13 @@ def UpdateSession(sessionfilepath,**arg):
 
 if __name__ == '__main__':
     
-    NAME = 'ms/new_aug'
+
+    RUN = 'lr_study'
     
     pc_name = platform.node()
     print("[INFO][SCRIPT] "+ pc_name)
 
+    LR_RANGE= [0.000001,0.00001,0.0001,0.001,0.01]
 
     if pc_name == 'tiago-lp': # Laptop (Testing)
         parameters = TEST_PARAMETERS
@@ -157,26 +163,29 @@ if __name__ == '__main__':
     t = 't1' 
     for i in range(1):
         for network in networks:    
-        #for t in tx:
-            #for lr in LR_RANGE:
+            for lr in LR_RANGE:
                 #print("[INFO][SCRIPT] Cycle: %f"%(lr))
-                parameters['LEARNING_RATE'] = LR[network]
-                parameters['WEIGHT_DECAY'] = WD[network]
-                
-                ms_session_root = 'ms'
+                parameters['LEARNING_RATE'] = lr
+                #parameters['WEIGHT_DECAY'] = wd
+                session_root = 'ms'
                 parameters['SENSOR'] = 'altum' 
+                parameters['RUN'] = os.path.join(session_root,RUN)
                 for file in ms_files:
                     print("[INFO][SCRIPT] File: " + file)
-                    org_session = os.path.join(ms_session_root,file)
+                    org_session = os.path.join(session_root,file)
                     session,name = UpdateSession(org_session, cross_val = t, network = network, **parameters)
                     name = name + '_i:' + str(i)  
                     run_script(session = session, cmd = EXEC_FILE,writer = name)
                 
-                #print("[SCRIPT] Test: " + t)
-                
-                #hd_session_root =  'hd'
-                #parameters['SENSOR'] = 'x7' 
-                #org_session = os.path.join(hd_session_root,hd_files)
-                #session,name = UpdateSession(org_session, cross_val = t, network = network, **parameters) 
-                #name = name + '_i:' + str(i) 
-                #run_script(session = session, cmd = EXEC_FILE,writer = name)
+
+    for i in range(1):
+        for network in networks:    
+        #for t in tx:
+            for lr in LR_RANGE:
+                session_root = 'hd'
+                parameters['RUN'] = os.path.join(session_root,RUN)
+                parameters['SENSOR'] = 'x7' 
+                org_session = os.path.join(session_root,hd_files)
+                session,name = UpdateSession(org_session, cross_val = t, network = network, **parameters) 
+                name = name + '_i:' + str(i) 
+                run_script(session = session, cmd = EXEC_FILE,writer = name)

@@ -15,7 +15,7 @@ from torch.utils.data import Dataset, DataLoader
 package_root  = os.path.dirname(pathlib.Path(__file__).parent.absolute())
 sys.path.append(package_root)
 
-from inference import evaluation
+from utils.segment_metrics import compute_scores
 
 HEIGHT = 240
 WIDTH = 240

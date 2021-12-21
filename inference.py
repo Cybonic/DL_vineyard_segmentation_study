@@ -38,6 +38,47 @@ from utils.vis_utils import vis
 import platform
 import matplotlib.pyplot as plt
 from utils import tf_writer
+from utils import segment_metrics as seg_metrics
+from PIL import Image
+import progressbar
+
+def parse_name(file):
+    h,w = file.split('_')
+    return(int(h),int(w))
+
+def _rebuild_ortho_mask_from_mem(prediction,theight,twidth):
+    raster_mask = np.zeros((theight,twidth),dtype=np.uint8)
+    
+    #bar = progressbar.ProgressBar(max_value=len(prediction)) 
+    for i,(pred_mask_dict) in enumerate(prediction):
+        # file name parser
+        pred_mask = pred_mask_dict['mask']
+        name = pred_mask_dict['name']
+        
+        #print(name)
+        ph,pw = parse_name(name)
+
+        if len(pred_mask.shape)> 2:
+          pred_mask = pred_mask.squeeze()
+        
+        h,w = pred_mask.shape
+        lh,hh,lw,hw = ph,ph+h,pw,pw+w
+        raster_mask[lh:hh,lw:hw] = pred_mask
+        
+    return(raster_mask)
+
+def rebuild_ortho(prediction_masks,dest_dir,file,save=True):
+  if not os.path.isdir(dest_dir):
+    os.makedirs(dest_dir)
+
+  file_name = os.path.join(dest_dir,file + '.png')
+  ortho_mask = _rebuild_ortho_mask_from_mem(prediction_masks,23500,22400)
+  if save:
+    img_pred_mask = (ortho_mask*255).astype(np.uint8)
+    image = Image.fromarray(img_pred_mask)
+    image.convert('RGB')
+    image.save(file_name)
+  return(ortho_mask)
 
 
 
@@ -49,14 +90,9 @@ def logit2label(array,thres):
     Returns
       - 1 x m x n  array of labels (int) 
     '''
-    new_array = np.zeros(array.shape,dtype=np.int32)
-    norm_array = torch.nn.Sigmoid()(array).cpu().detach().numpy()
-    bin_class = norm_array >= thres
-
-    new_array[bin_class] = 1
-    
-
-    return(new_array)
+    norm_array = torch.sigmoid(array).detach().cpu().numpy()
+    bin_class = (norm_array >= thres).astype(np.uint8)
+    return(bin_class)
 
 
 def evaluation(gtArray,predArray):
@@ -108,10 +144,6 @@ def network_wrapper(session_settings,model = None ,pretrained_file= None):
   for key, value in bands.items():
     if value == True:
       count = count +1
-
-  # for key, value in index.items():
-  #   if value == True:
-  #    count = count +1
 
   model = OrthoSeg(network_param,image_shape,channels=count)
 
@@ -197,21 +229,21 @@ def eval_net(model,loader,device,criterion,writer,epoch,save_flag = False):
 
   '''
 
-  # print("[EVAL_NET] device: %s"%(device))
-  
+  with torch.no_grad():
+    torch.cuda.empty_cache()
+
   model.eval()
-  #model = model.to(device)
 
   masks = []
   preds = []
   
-  
-
+  seg_scores = seg_metrics.compute_scores()
   ndvi_array = {'global':[],'pred':[],'gt':[]}
 
   masks = []
   preds = []
   running_loss = []
+  prediction_masks = []
 
   for batch in tqdm.tqdm(loader,'Validation'):
 
@@ -221,24 +253,23 @@ def eval_net(model,loader,device,criterion,writer,epoch,save_flag = False):
     name = batch['name'][0]
     path = batch['path'][0]
 
-    img  = img.type(torch.FloatTensor).to(device)
-    msk  = np.array(mask.cpu().detach().numpy(),dtype=np.int32)
-    ndvi = np.array(ndvi.cpu().detach().numpy())
-
-    ndvi[np.isnan(ndvi)]=0
+    #img  = img.type(torch.FloatTensor).to(device)
+    img  = img.to(device)
+    msk  = (mask.cpu().detach().numpy()).astype(np.uint8)
 
     pred_mask = model(img)
     loss_torch = criterion(pred_mask,mask.to(device))
-    # transform logit to label  
-    pred_mask = logit2label(pred_mask,0.5)
-    
+
+    bin_pred_mask = logit2label(pred_mask.detach(),0.5)
+   
+    prediction_masks.append({'mask':bin_pred_mask,'name':name})
     running_loss.append(loss_torch.detach().item())
 
     if torch.isnan(loss_torch):
       print("[WARN] WARNING NAN")
 
     masks.append(msk.flatten())
-    preds.append(pred_mask.flatten())
+    preds.append(bin_pred_mask.flatten())
     
     #  # Convert array to image for visualization and storin
 
@@ -246,16 +277,18 @@ def eval_net(model,loader,device,criterion,writer,epoch,save_flag = False):
   PREDS = np.concatenate(preds, axis=None)
 
   scores = evaluation(Y,PREDS)
-
+  #epoch_f1 = seg_scores.get_f1()
+  epoch_f1 = scores['f1']
   val_loss = np.array(running_loss).mean()
   scores['val_loss'] = val_loss
 
-  tb_frame = tf_writer.build_tb_frame(img,mask,pred_mask)
+  tb_frame = tf_writer.build_tb_frame(img,mask,bin_pred_mask)
   writer.add_image(tb_frame,epoch,'val')
-  writer.add_f1(scores['f1'],epoch,'val')
+  writer.add_f1(epoch_f1,epoch,'val')
   writer.add_loss(val_loss,epoch,'val')
+  dataset_name = '_'.join(loader.dataset.plot)
   
-  return(scores)
+  return({'f1':epoch_f1,'val_loss':val_loss},prediction_masks,dataset_name)
 
 
 
@@ -265,7 +298,7 @@ if __name__ == '__main__':
       '--data_root', '-r',
       type=str,
       required=False,
-      default='/home/tiago/workspace/dataset/learning',
+      default='/home/tiago/learning',
       #default='/home/tiago/desktop_home/workspace/dataset/learning/valdoeiro/',
       help='Directory to get the trained model.'
   )
@@ -295,7 +328,7 @@ if __name__ == '__main__':
       '--session', '-f',
       type=str,
       required=False,
-      default='hd/rgb',
+      default='dev',
       help='Directory to get the trained model.'
   )
 
@@ -323,7 +356,13 @@ if __name__ == '__main__':
       default=1,
       help='Directory to get the trained model.'
   )
-
+  parser.add_argument(
+      '--writer',
+      type=str,
+      required=False,
+      default='hd_segnet',
+      help='Directory to get the trained model.'
+  )
   parser.add_argument(
       '--results',
       type=str,
@@ -338,6 +377,7 @@ if __name__ == '__main__':
   model_name = FLAGS.model
   root = FLAGS.data_root
   plot_flag = FLAGS.plot
+  writer_name = FLAGS.writer
 
   pretrained = None if FLAGS.pretrained == "" else FLAGS.pretrained
   
@@ -353,8 +393,15 @@ if __name__ == '__main__':
   # Load dataset 
   # Get train and val loaders
   val_loader = dataset_loader_wrapper(root,session_settings)
+  criterion = nn.BCEWithLogitsLoss() 
 
-  scores  = eval_net(network,val_loader,device,plot_flag = plot_flag,save_flag = True, save_path=os.path.join('fig',model_name))
+  writer_path = os.path.join('saved',session_settings['run'],writer_name)
+  writer = tf_writer.writer(writer_path,mode= ['train','val'])
 
-  print("[INF] Mean f1 %f"%(scores['f1']))
+  metrics,prediction_mask,dataset_name = eval_net(network,val_loader,device,criterion,writer,0)
+
+  name = '%s_f1_%02.2f.pth'%(dataset_name,(metrics['f1']*100)) 
+  rebuild_ortho(prediction_mask,'predictions',name)
+
+  print("[INF] Mean f1 %f"%(metrics['f1']))
 

@@ -24,9 +24,9 @@ TEST = {'t1':['qtabaixo'],
 
 ms_files = [
             #'all',
-            #'rgb',
+            'rgb',
             #'re',
-            'nir'
+            #'nir'
             #'thermal',
             #'rgb_thermal',
             #'rgb_thermal_re',
@@ -50,7 +50,6 @@ REPETITIONS = 1
 EXEC_FILE = 'train.py'
 CMD = 'python3'
 PLOT_FLAG = 0
-
 
 
 
@@ -138,6 +137,7 @@ def UpdateSession(sessionfilepath,**arg):
 
 if __name__ == '__main__':
     
+
     NAME = 'ms/wd_study'
     
     pc_name = platform.node()

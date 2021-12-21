@@ -18,7 +18,9 @@ Log:
 '''
 
 import numpy as np
-
+from torch import nn
+import torch
+from sklearn.metrics import f1_score
 
 def iou_coef(trueArray,predArray,smooth=0.1):
 
@@ -152,3 +154,40 @@ def mean_dice_np(y_true, y_pred, **kwargs):
     """
     return metrics_np(y_true, y_pred, metric_name='dice', **kwargs)
 
+
+def logit2label(pred,thresh):
+        # convert to numpy
+        if not torch.is_tensor(pred):
+            raise ValueError
+        
+        norm_array = torch.sigmoid(pred).detach().cpu().numpy()
+        predict = (norm_array >= thresh).astype(np.uint8)
+        return(predict)
+
+class compute_scores():
+    def __init__(self,thres=0.5):
+        self.epoch_predict  =[]
+        self.epoch_targets=[]
+        self.thres = thres
+
+    def update_from_torch(self,target,predict):
+        # convert to numpy
+        if not isinstance(predict,np.ndarray):
+            predict = predict.data.cpu().numpy()
+        if not isinstance(target,np.ndarray):
+            target = target.data.cpu().numpy().astype(np.uint8)
+        # compute batch scores
+        #predict = logit2label(pred,self.thres)
+        predict = predict.flatten()
+        target =  target.flatten()
+        #  compute global scores
+        self.epoch_predict.append(predict)
+        self.epoch_targets.append(target)
+
+        return(f1_score(target,predict))
+    
+    def get_f1(self):
+        predicts = np.concatenate(self.epoch_predict)
+        targets  = np.concatenate(self.epoch_targets)
+
+        return(f1_score(targets,predicts))

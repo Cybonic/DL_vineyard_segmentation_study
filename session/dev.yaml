@@ -1,8 +1,9 @@
 
-device: 'cuda:0'
+device: 'cpu'
+#device: 'cuda:0'
 name: 'dev'
-  
-run: 'dev'
+
+run: 'DEV'
 dataset:
   root: samples
   name: altum   
@@ -12,8 +13,8 @@ dataset:
     shuffle: True
     batch_size: 1
     workers: 1 
-  augment: True 
-  fraction: 0.5
+  augment: False 
+  fraction: 0.1
 
 # Model to be loaded
 network: 
@@ -21,20 +22,21 @@ network:
   input_shape: [240,240]
   drop_rate: 0.5
   bands:
-    R: False
-    G: False
-    B: False
+    R: True
+    G: True
+    B: True
     RE: False
-    NIR: True 
+    NIR: False 
     thermal: False
   index:
     NDVI: False
   pretrained: 
-    use: True
+    use: False
+    save: False
     path: 'checkpoints\t1\hd'
     file: 'segnet_best'
 # training parameters
-max_epochs: 2
+max_epochs: 5
 report_val: 1
 # optimization parameters
 optimizer:

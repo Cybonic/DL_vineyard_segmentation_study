@@ -12,10 +12,9 @@ import sys
 from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader 
 
-package_root  = os.path.dirname(pathlib.Path(__file__).parent.parent.absolute())
+package_root  = os.path.dirname(pathlib.Path(__file__).parent.absolute())
 sys.path.append(package_root)
 
-from utils import tf_writer
 from dataset.learning_dataset import dataset_wrapper,augmentation
 
 HEIGHT = 240
@@ -44,32 +43,6 @@ def generate_batches(tensorlist,batch_size):
   return(batch_list)
 
 
-
-def image_generator(height,width,batch,n_batches):
-
-    image = torch.rand(n_batches,batch,3,height, width)
-    masks = torch.rand(n_batches,batch,1,height, width)
-    pred = torch.rand(n_batches,batch,1,height, width)
-
-    return(image,masks,pred)
-
-def signal_generator(samples):
-
-    signal = torch.rand(samples)
-    x_axis = torch.tensor(range(samples))
-
-    return(signal,x_axis)
-
-def synthetic_data_generator():
-  images,masks,preds  = image_generator(HEIGHT,WIDTH,BATCH_SIZE,MAX_EPOCH)
-  f1_signal,epoch     = signal_generator(MAX_EPOCH)
-  loss_signal,epoch   = signal_generator(MAX_EPOCH)
-
-  images = {'imgs':images,'masks':masks,'preds':preds}
-  signals = {'f1':f1_signal,'loss':loss_signal,'epoch':epoch}
-
-  return(images,signals)
-
 def get_data_from_dataset(dataset):
 
   image_vector = []
@@ -92,7 +65,7 @@ def get_data_from_dataset(dataset):
 
 
 
-def test_tf_writer_on_dataset(writer,dataset,mode)-> bool:
+def pixel_info(dataset_loader)-> bool:
 
     images = get_data_from_dataset(dataset)
 
@@ -100,59 +73,48 @@ def test_tf_writer_on_dataset(writer,dataset,mode)-> bool:
     masks = images['masks']
     pred = images['preds']
     names = images['name']
-    imgs = generate_batches(imgs,5)
-    masks = generate_batches(masks,5)
-    pred = generate_batches(pred,5)
-    names = generate_batches(names,5)
 
+    pos = 0
+    neg = 0
+    total = 0
     for e,(i,m,p,n) in tqdm(enumerate(zip(imgs,masks,pred,names))):
+      m = m.numpy()
+      pos_pixels = 1*(m == 1).sum()
+      neg_pixels = 1*(m == 0).sum()
+      tot_pixels = len(m.flatten())
+      total = total + tot_pixels
+      pos = pos + pos_pixels
+      neg = neg + neg_pixels
 
-      tb_frame = tf_writer.build_tb_frame(i,m,p)
-      writer.add_image(tb_frame,e,mode)
-      #input("Press Enter to continue...")
-
-
-
-def test_tf_writer_on_synthetic_data(writer,images,signals,mode)-> bool:
-
-   
-    imgs = images['imgs']
-    masks = images['masks']
-    pred = images['preds']
-
-    epoch = signals['epoch']
-    f1 = signals['f1']
-    loss = signals['loss']
-
-    for i,m,p,e in zip(imgs,masks,pred,epoch):
-      tb_frame = tf_writer.build_tb_frame(i,m,p)
-      writer.add_image(tb_frame,e,mode)
-      
-
-    for l,f,e in zip(loss,f1,epoch):
-      writer.add_f1(f,e,mode)
-      writer.add_loss(l,e,mode)
+    print("positive: %d"%(pos))
+    print("negative: %d"%(neg))
+    print("negative: %d"%(total))
 
 
+    print("positive: %f"%(pos/total))
+    print("Negative: %f"%(neg/total))
+    print("Ration: %f"%(pos/neg))
 
+    n_frames = masks.numpy().shape[0]
+    print("Frames: %d"%(n_frames))
 
 if __name__ == '__main__':
     
 
     
-    DATASET = ['qtabaixo','esac','valdoeiro']
     DATASET = ['qtabaixo']
+    # DATASET = ['qtabaixo']
 
     root = '/home/tiago/learning'
-    sensor = 'altum'
+    sensor = 'x7'
   
     bands = {'R':True,'G':True,'B':True}
     #bands = {'NIR':True}
-    RANDOM = "ALTUM"
+    RANDOM = "SHOW_data_NEW_13_norm"
 
     name = ''.join(['_'.join(DATASET),'s',sensor,'h',str(HEIGHT),'w',str(WIDTH),'b',str(BATCH_SIZE),'e',str(MAX_EPOCH),'_'.join(bands.keys())])
     
-    writer = tf_writer.writer(os.path.join('saved',name + RANDOM),mode=['train','val','dataset'])
+ 
 
     #test_tf_writer_on_synthetic_data(writer,images,signals,'train')
     #test_tf_writer_on_synthetic_data(writer,images,signals,'val')
@@ -178,8 +140,8 @@ if __name__ == '__main__':
     
     dataset_loader = DataLoader( dataset,
                                     batch_size = BATCH_SIZE,
-                                    shuffle = False,
+                                    shuffle = True,
                                     num_workers = 0,
                                     pin_memory=False)
 
-    test_tf_writer_on_dataset(writer,dataset_loader,'dataset')
+    pixel_info(dataset_loader)

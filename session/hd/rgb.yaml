@@ -1,7 +1,7 @@
 
-device: 'cuda:1'
+device: 'cuda:0'
 name: 'hd_rbg' 
-run: 'hd'
+run: 'NEW_RUN/hd'
 # dataset ['esac1','esac2','valdo']
 dataset:
   name: x7 
@@ -12,10 +12,10 @@ dataset:
   test:  ['qtabaixo']
   #train: ['esac1','esac2']
   #test:  [qtabaixo,'valdoeiro']
-  fraction: 1
+  fraction: 0.1
   loader:
     shuffle: True
-    batch_size: 10
+    batch_size: 1
     workers: 0
   augment: True  
 # Model to be loaded
@@ -33,24 +33,24 @@ network:
   index:
     NDVI: False
   pretrained: 
-    use: True
+    use: False
     save: True
     path: 'checkpoints/hd'
     file: 'best'
 # training parameters
-max_epochs: 100
+max_epochs: 50
 report_val: 1
 # optimization parameters
 optimizer:
-  lr: 0.001
-  w_decay: 0
-  amsgrad: False
+  lr: 0.0001
+  w_decay: 0.00001
+  amsgrad: True
   betas: [0.9, 0.99]
   epsilon_w:  0 
 # Saving settings
 saver:
   file: t1
-  result_dir: 'results'  
+  result_dir: 'results/hd'  
   prediction_dir: 'prediction'
 
   

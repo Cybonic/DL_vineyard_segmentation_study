@@ -16,7 +16,8 @@ package_root  = os.path.dirname(pathlib.Path(__file__).parent.parent.absolute())
 sys.path.append(package_root)
 
 from utils import tf_writer
-from dataset.learning_dataset import dataset_wrapper,augmentation
+from dataset.learning_dataset import dataset_wrapper
+from dataset.augmentation import augment_rgb
 
 HEIGHT = 240
 WIDTH = 240
@@ -105,7 +106,7 @@ if __name__ == '__main__':
     
 
     RANDOM = "TEST_AUG5"
-    name = ''.join([DATASET,'h',str(HEIGHT),'w',str(WIDTH),'b',str(BATCH_SIZE),'e',str(MAX_EPOCH),])
+    name = ''.join(['_'.join(DATASET),'h',str(HEIGHT),'w',str(WIDTH),'b',str(BATCH_SIZE),'e',str(MAX_EPOCH),])
 
     images,signals = synthetic_data_generator()
     
@@ -120,7 +121,7 @@ if __name__ == '__main__':
     bands = ['R','G','B']
     augment = False
     set = DATASET
-    aug = augmentation(sensor_type = sensor)
+    aug = augment_rgb()
   
 
 
