@@ -2,23 +2,110 @@
 DATASET: https://drive.google.com/drive/folders/1iyrKndWzG9lOM-aVLs2gt3kgJUt0ychE?usp=sharing
 
 
-The dataset contains data from three vineyards from central Portugal (i.e, two vineyards from Coimbra and one from Valdoeiro). The data was acquired with a UAS that had a multispectral and a high-definition cameras onboard. The acquired images were used to build orthomosaics and digital surface models from the respective sites. 
+The dataset contains data from four vineyards from central Portugal (i.e, two vineyards from Coimbra and one from Valdoeiro). The data was acquired with a UAS that had a multispectral and a high-definition cameras onboard. The acquired images were used to build orthomosaics and digital surface models from the respective sites. 
 The dataset's structure: 
 
-- paper data
-    - > ESAC1
-        - > Multispectral
-            - > sub-images
-                - 0000.npy
-                - 0001.npy
-            - > sub-masks
-                - 0000.
-        - > RGBX7 (HD)
-            - > sub-images
-            - > sub-masks
-    - > ESAC2
-        ...
-    - > Valdoeiro 
+
+```
+Paper data
+├── ESAC1
+│   ├── altum
+│   │   ├── images
+│   │   │   ├── 00000.tiff
+│   │   │   ├── 00001.tiff
+│   │   │   ...
+│   │   │
+│   │   └── masks
+│   │       ├── 00000.tiff
+│   │       ├── 00001.tiff
+│   │        ...
+│   │
+│   └── x7
+│       ├── images
+│       │   ├── 00000.tiff
+│       │   ├── 00001.tiff
+│       │    ...
+│       │
+│       └── masks
+│           ├── 00000.tiff
+│           ├── 00001.tiff
+│            ...
+│    
+│
+├── ESAC2
+│   ├── altum
+│   │   ├── images
+│   │   │   ├── 00000.tiff
+│   │   │   ├── 00001.tiff
+│   │   │   ...
+│   │   │
+│   │   └── masks
+│   │       ├── 00000.tiff
+│   │       ├── 00001.tiff
+│   │        ...
+│   │
+│   └── x7
+│       ├── images
+│       │   ├── 00000.tiff
+│       │   ├── 00001.tiff
+│       │     ...
+│       │
+│       └── masks
+│           ├── 00000.tiff
+│           ├── 00001.tiff
+│
+│
+│
+├── Valdoeiro
+│   ├── altum
+│   │   ├── images
+│   │   │   ├── 200000.npy 
+│   │   │   ├── 200001.npy 
+│   │   │   ...
+│   │   │
+│   │   └── masks
+│   │       ├── 200000.npy 
+│   │       ├── 200001.npy 
+│   │        ...
+│   └── x7
+│       ├── images
+│       │   ├── 200000.npy 
+│       │   ├── 200001.npy 
+│       │    ...
+│       │
+│       └── masks
+│           ├── 200000.npy 
+│           ├── 200001.npy 
+│            ...
+│            
+│
+└── QtaBaixo
+    ├── altum
+    │   ├── images
+    │   │   ├── 00000.tiff
+    │   │   ├── 00001.tiff
+    │   │   ...
+    │   │
+    │   └── masks
+    │       ├── 00000.tiff
+    │       ├── 00001.tiff
+    │        ...
+    └── x7
+        ├── images
+        │   ├── 00000.tiff
+        │   ├── 00001.tiff
+        │    ...
+        │
+        └── masks
+            ├── 00000.tiff
+            ├── 00001.tiff
+            ...
+            
+```
+
+
+
+
 - Mulstispectral(RGB, RE, NIR and Thermal) orthomosaics
 - High-definition orthomosaics 
 - Digital Surface Models 
@@ -53,7 +140,7 @@ based on: https://mothergeo-py.readthedocs.io/en/latest/development/how-to/gdal-
 To run the pipeline that is proposed in the [paper](https://arxiv.org/abs/2108.01200). 
 
 run: 
-    
+
     $ orthosegmentation.py 
 
 
@@ -61,11 +148,9 @@ run:
 
 The pretrained models with a specific dataset maintain the copyright of such dataset.
 
-Link to pretrined models will be published soon 
+Link to preprinted models will be published soon 
 
 # To-Do
-- change multispectral data format from npy to image per band 
-
 
 
 

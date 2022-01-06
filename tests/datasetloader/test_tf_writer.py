@@ -16,7 +16,8 @@ package_root  = os.path.dirname(pathlib.Path(__file__).parent.parent.absolute())
 sys.path.append(package_root)
 
 from utils import tf_writer
-from dataset.learning_dataset import dataset_wrapper,augmentation
+from dataset.learning_dataset import dataset_wrapper
+from dataset.augmentation import augment_rgb as augmentation
 
 HEIGHT = 240
 WIDTH = 240
@@ -141,14 +142,14 @@ if __name__ == '__main__':
 
     
     DATASET = ['qtabaixo','esac','valdoeiro']
-    DATASET = ['qtabaixo']
+    DATASET = ['esac','valdoeiro']
 
     root = '/home/tiago/learning'
     sensor = 'altum'
   
-    bands = {'R':True,'G':True,'B':True}
-    #bands = {'NIR':True}
-    RANDOM = "ALTUM"
+    #bands = {'R':True,'G':True,'B':True}
+    bands = {'NIR':True}
+    RANDOM = "DISPLAY_NIR"
 
     name = ''.join(['_'.join(DATASET),'s',sensor,'h',str(HEIGHT),'w',str(WIDTH),'b',str(BATCH_SIZE),'e',str(MAX_EPOCH),'_'.join(bands.keys())])
     
@@ -162,7 +163,7 @@ if __name__ == '__main__':
 
     
     augment = False
-    aug = augmentation(sensor_type = sensor)
+    #aug = augmentation(sensor_type = sensor)
     aug = None
 
     dataset= dataset_wrapper(
@@ -172,8 +173,8 @@ if __name__ == '__main__':
                           bands, 
                           agro_index = {'NDVI':False}, 
                           transform = aug, 
-                          path_type='global',
-                          fraction = 1
+                          path_type='global', 
+                          fraction = 0.1
                           )
     
     dataset_loader = DataLoader( dataset,

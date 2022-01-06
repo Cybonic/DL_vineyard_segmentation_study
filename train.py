@@ -233,7 +233,8 @@ if __name__ == '__main__':
       '--session', '-f',
       type=str,
       required=False,
-      default='hd/rgb',
+      #default='hd/rgb',
+      default='ms/rgb_nir',
       #default='dev',
       help='Directory to get the trained model.'
   )
@@ -258,7 +259,7 @@ if __name__ == '__main__':
       '--writer',
       type=str,
       required=False,
-      default='hd_segnet',
+      default='aug/color_space/soft_aug/full/segnet',
       help='Directory to get the trained model.'
   )
 
@@ -314,7 +315,7 @@ if __name__ == '__main__':
   epochs    = session_settings['max_epochs']
   VAL_EPOCH = session_settings['report_val']
 
-  session_name = session_settings['name'] +':' + writer_name
+  session_name = session_settings['name'] #+':' + writer_name
   print("\n--------------------------------------------------------")
   print("[INF] Max Epochs: %d"%(epochs))
   print("[INF] Validation report epoch: %d"%(VAL_EPOCH))

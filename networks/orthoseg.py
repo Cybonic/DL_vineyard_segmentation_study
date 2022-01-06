@@ -84,30 +84,40 @@ class OrthoSeg(nn.Module):
 
 def weights_init(model):
 
-    
+    gain = init.calculate_gain('relu')
+
     if isinstance(model, nn.Linear):
         if model.weight is not None:
             init.kaiming_uniform_(model.weight.data)
         if model.bias is not None:
-            init.normal_(model.bias.data)
+            #init.normal_(model.bias.data)
+            init.xavier_uniform_(model.bias.data,gain)
     elif isinstance(model, nn.BatchNorm1d):
         if model.weight is not None:
-            init.normal_(model.weight.data, mean=1, std=0.02)
+            #init.normal_(model.weight.data, mean=1, std=0.02)
+            init.kaiming_uniform_(model.weight.data, a=0, mode='fan_in', nonlinearity='prelu')
+            #init.xavier_uniform_(model.weight.data,gain)
         if model.bias is not None:
             init.constant_(model.bias.data, 0)
     elif isinstance(model, nn.BatchNorm2d):
         if model.weight is not None:
-            init.normal_(model.weight.data, mean=1, std=0.02)
+            init.normal_(model.weight.data, mean=0, std=1)
+            #init.kaiming_uniform_(model.weight.data, a=0, mode='fan_in', nonlinearity='relu')
+            #init.xavier_uniform_(model.weight.data,gain)
         if model.bias is not None:
             init.constant_(model.bias.data, 0)
     elif isinstance(model, nn.BatchNorm3d):
         if model.weight is not None:
-            init.normal_(model.weight.data, mean=1, std=0.02)
+            #init.normal_(model.weight.data, mean=1, std=0.02)
+            init.kaiming_uniform_(model.weight.data, a=0, mode='fan_in', nonlinearity='prelu')
+            #init.xavier_uniform_(model.weight.data,gain)
         if model.bias is not None:
             init.constant_(model.bias.data, 0)
     elif isinstance(model, nn.Conv2d):
         if model.weight is not None:
-            init.normal_(model.weight.data, mean=1, std=0.02)
+            #init.normal_(model.weight.data, mean=1, std=0.02)
+            #init.xavier_uniform_(model.weight.data,gain)
+            init.kaiming_uniform_(model.weight.data, a=0, mode='fan_in', nonlinearity='prelu')
         if model.bias is not None:
             init.constant_(model.bias.data, 0)
     else: 

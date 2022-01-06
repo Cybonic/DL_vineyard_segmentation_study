@@ -26,6 +26,7 @@ import torch.utils.data as torch_utils
 import rioxarray
 from PIL import Image
 from torchvision import transforms
+from dataset.augmentation import augment_rgb
 
 
 
@@ -97,12 +98,26 @@ def preprocessing(img,values):
  
     return(nrom_bands)
 
-def preprocessingv2(img,mean=0,std=1):
+
+def preprocessingv3(img,mean=0,std=1):
    
 
     transform_norm = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean, std)
+    ])
+
+    nrom_bands = transform_norm(img).numpy()   
+    nrom_bands = np.transpose(nrom_bands,(1,2,0))
+    return(nrom_bands)
+
+def preprocessingv2(img,mean=0,std=1):
+   
+    img = img.astype(np.float32)/255
+    transform_norm = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0], std=[1]) 
+    #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
     nrom_bands = transform_norm(img).numpy()   
@@ -294,6 +309,9 @@ class dataset_wrapper(greenAIDataStruct):
 
         self.input_channels = {'bands':bands,'indices':agro_index}
         self.color_value =  0
+        
+
+
 
     def __getitem__(self,itr):
 
@@ -303,6 +321,8 @@ class dataset_wrapper(greenAIDataStruct):
 
         if self.transform:
             img,mask,agro_indice = self.transform(img,mask,agro_indice)
+
+        #img = self.normalize_image(img)
 
         img = preprocessingv2(img, self.color_value)
 
@@ -385,7 +405,7 @@ class dataset_loader():
 
         aug = None
         if augment == True:
-            aug = rgb_augmentation(sensor)
+            aug = augment_rgb()
         # Test set conditions
 
         test_cond = [True for name in testset if name in DATASET_NAMES]
@@ -472,7 +492,7 @@ def TEST_FRACTION(root,fraction = None):
 
 def TEST_PLOT_DATA(root,fraction = None, pause = 1):
 
-    aug = augmentation()
+    #aug = augmentation()
     multispectral_test = dataset_wrapper(root,
                                         ['esac1'],
                                         'Multispectral',

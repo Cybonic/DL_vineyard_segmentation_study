@@ -12,7 +12,7 @@ dataset:
   test:  ['qtabaixo']
   #train: ['esac1','esac2']
   #test:  [qtabaixo,'valdoeiro']
-  fraction: 0.1
+  fraction: 1
   loader:
     shuffle: True
     batch_size: 1
