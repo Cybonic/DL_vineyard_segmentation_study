@@ -26,57 +26,20 @@ def save_config(session,param):
     with open(session, 'w') as file:
         documents = yaml.dump(param, file)
 
-def load_ortho_raster(File):
-    if not os.path.isfile(File):
-        raise NameError('File does not exist')
-    img = gdal.Open(File)
-    return(img)
+def get_files(dir):
+    '''
+    return files in a directory
+    @param dir (string) target direcotry
+    @retrun (list): list of files  
+    '''
+    if not os.path.isdir(dir):
+        return(list([]))
 
-def get_rgb_bans(multispectral):
-    # Get and convert  RGB bands to numpy tensor gdal [nxmx6] -> numpy [nxmx3]
-    # 
-    # get_rgb_bans(multispectral):
-    # Input: 
-    #  multispectral raster image (gdal) 
-    # Output:
-    #  
-    # since there are 3 bands
-    # we store in 3 different variables
-    r = multispectral.GetRasterBand(1).ReadAsArray() # Red channel
-    g = multispectral.GetRasterBand(2).ReadAsArray() # Green channel
-    b = multispectral.GetRasterBand(3).ReadAsArray() # Blue channel
-
-    img = np.dstack((r, g, b))
-
-    return(img)
-
-def align_rasters(match_ds,src):
-    # Other approach https://stackoverflow.com/questions/54959995/match-raster-cell-size-to-another-raster/55123011
-
-    if not os.path.isdir("Temp"):
-        os.mkdir("Temp")
-        print("[INF] \"Temp\" folder created!")
-        
-    outFile = "Temp\out.tif"
-
-    # Source
-    src_proj = src.GetProjection()
-    src_geotrans = src.GetGeoTransform()
-    src_bands = src.RasterCount
-    # We want a section of source that matches this:
-    match_proj = match_ds.GetProjection()
-    match_geotrans = match_ds.GetGeoTransform()
-    wide = match_ds.RasterXSize
-    high = match_ds.RasterYSize
-
-    # Output / destination
-    dst = gdal.GetDriverByName('Gtiff').Create(outFile, wide, high, src_bands, gdal.gdalconst.GDT_Float32)
-    dst.SetGeoTransform( match_geotrans )
-    dst.SetProjection( match_proj)
-
-    # Do the work
-    gdal.ReprojectImage(src, dst, src_proj, match_proj, gdal.gdalconst.GRA_NearestNeighbour)
-    # os.remove('Temp')
-    return(dst)
+    files = os.listdir(dir)
+    #if not end:
+    new_files = [f.split('.')[0] for f in files]
+    # Runs only when DEBUG FLAG == TRUE
+    t = files[0].split('.')[1]
+    return({'root':dir,'files':new_files,'file_type':t})
 
 

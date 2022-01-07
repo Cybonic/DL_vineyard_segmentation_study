@@ -22,38 +22,16 @@ from networks import segnet
 import shutil
 import matplotlib.pyplot as plt
 from PIL import Image
-import utils.tif_utils as tif
-from osgeo import gdal
+import utils.tif_utils as tifutils
+import tifffile
+# from osgeo import gdal
 
-def _rebuild_ortho_mask(file_masks,sub_mask_dir):
-    raster_array = np.array([])
-    raster_line  = np.array([])
-    line = 0
-    bar = progressbar.ProgressBar(max_value=len(file_masks)) 
-    for i,file in enumerate(file_masks):
-        # file name parser
-        parsed_file = file.split('.')[0].split('_')
-        init_height = int(parsed_file[0])
-        init_width  = int(parsed_file[1])
+band_to_indice = {'B':0,'G':1,'R':2,'RE':3,'NIR':4,'thermal':5}
 
-        mask_path = os.path.join(sub_mask_dir,file)
-        mask = np.asarray(Image.open(mask_path))
+def parse_name(file):
+    h,w = file.split('_')
+    return(int(h),int(w))
 
-        if(init_height>line):
-            if raster_array.size == 0:
-                raster_array = raster_line.copy() 
-            else:
-                raster_array = np.vstack((raster_array,raster_line))
-            raster_line = np.array([])
-            line = init_height
-        
-        if line == init_height:
-            if raster_line.size == 0:
-                raster_line = mask
-            else: 
-                raster_line = np.hstack((raster_line,mask))
-        bar.update(i)
-    return(raster_array)
 
 
 
@@ -89,17 +67,18 @@ def logit2label(array,thres):
 class orthoseg():
     def __init__(self,
                     model = None,
-                    output_ortho_file = 'ortho_mask.tif', 
+                    output_ortho_file = 'ortho_mask.tif',
                     temp_folder     = 'temp',
                     sub_image_size  = 240, 
                     device          = 'cuda', 
                     thresh          = 0.5,
-                    file_format     = 'BMP'
+                    bands = {'R':True,'G':True,'B':True,'NIR':False,'RE':False}
                     ):
         
        
         # Load file 
-        self.format = file_format
+        self.format = 'tiff'
+        self.bands_idx = [band_to_indice[key] for key,value in bands.items() if value == True]
         # Split orthomosaic into sub-images
         self.sub_image_size = sub_image_size # image size of the sub images 
         self.temp_folder    = temp_folder #  path to the temp folder
@@ -109,6 +88,10 @@ class orthoseg():
         self.path_to_save_ortho_mask = output_ortho_file
 
         self.device = device
+
+        self.width  = -1
+        self.height = -1
+
         if model == None:
             print("[ERROR] No Segmentation model available")
             exit(-1)
@@ -141,13 +124,12 @@ class orthoseg():
         
         raster = rioxarray.open_rasterio(path_to_file)
         #array = np.array(raster.values)
-
-        self.width = raster.rio.width 
+        self.width  = raster.rio.width 
         self.height = raster.rio.height 
-
+        raster = raster.values[self.bands_idx,:,:]
         return(raster)
     
-    def preprocessing(self,raster):
+    def preprocessing(self,array):
         '''
         Applying preprocessing to the loaded orthomosaic 
 
@@ -158,7 +140,7 @@ class orthoseg():
             numpy array containing the orthomosaic after the preprocessing  
         '''
         
-        array = np.array(raster.values)
+        pass
 
         return(array)
     
@@ -173,7 +155,7 @@ class orthoseg():
 
         '''
 
-                # delete tmp file if it exist
+        # delete tmp file if it exist
         if os.path.isdir(self.temp_folder):
             shutil.rmtree(self.temp_folder)
             print("[WAN] Directory deleted: %s"%(self.temp_folder))
@@ -192,7 +174,7 @@ class orthoseg():
         target_height = self.sub_image_size
         target_width  = self.sub_image_size
 
-        width = self.width
+        width  = self.width
         height = self.height
         
         array = array.transpose(1,2,0)
@@ -208,15 +190,13 @@ class orthoseg():
             while(w_itr < width):
                 # Sub-image name + absolute path 
                 #sub_img_path = os.path.join(self.sub_img,"%05d_%05d.png"%(h_itr,w_itr))
-                sub_img_name = "%05d_%05d.%s"%(h_itr,w_itr,self.format)
+                sub_img_name = "%05d_%05d"%(h_itr,w_itr)
                 sub_img_list.append(sub_img_name)
                 # crop sub-image
                 sub_array = array[h_itr:h_itr+target_height,w_itr:w_itr+target_width,:]
                 # Save image
-                sub_img = Image.fromarray(sub_array)
-                sub_img_path = os.path.join(self.sub_img_dir,sub_img_name)
-                sub_img.save(sub_img_path, format=self.format)
-                #mpimg.imsave(, sub_array)
+                sub_img_path = os.path.join(self.sub_img_dir,sub_img_name+'.'+self.format)
+                tifffile.imsave(sub_img_path, sub_array)
                 # Next width iteration
                 w_itr = w_itr + target_width
             # Next height iteration
@@ -232,70 +212,56 @@ class orthoseg():
             [list] of image files
 
         '''
-
         bar = progressbar.ProgressBar(max_value=len(sub_img_list))  
 
         for i,file in enumerate(sub_img_list):
-            img_path = os.path.join(self.sub_img_dir,file)
-            img = np.asarray(Image.open(img_path)).transpose(2,0,1)
+            img_path = os.path.join(self.sub_img_dir,file+'.'+self.format)
+            img = np.asarray(rioxarray.open_rasterio(img_path))
             img = np.expand_dims(img,0)
             # img = np.array(mpimg.imread(img_path)).transpose(2,0,1)
             img_torch = torch.from_numpy(img.copy()).type(torch.FloatTensor).to(self.device)
             # Model
             pred_mask = self.model(img_torch).squeeze()
-            mask = logit2label(pred_mask,self.thresh) # Input (torch) output (numpy)
-            img_mask = label2pixel(mask)
+            mask      = logit2label(pred_mask,self.thresh) # Input (torch) output (numpy)
+            img_mask  = label2pixel(mask)
             # image 
             #img_mask = np.array(mask*255,dtype=np.uint8)
             mask_img  = Image.fromarray(img_mask)
-            mask_path = os.path.join(self.sub_mask_dir,file)
-            mask_img.save(mask_path, format=self.format)
+            mask_path = os.path.join(self.sub_mask_dir,file + '.' + self.format)
+            mask_img.save(mask_path)
             # mpimg.imsave(os.path.join(self.sub_mask_dir,file),img_mask)
             bar.update(i)
             # Save mask with the same name to temp folder
 
 
-    def rebuild(self,target_geo_data_file,sub_mask_files):
-        '''
-        Rebuild ortho mask from the submasks 
+    def rebuild_ortho_mask(self,files):
+        raster_mask = np.zeros((self.height,self.width),dtype=np.uint8)
+        root = self.sub_mask_dir
+        #bar = progressbar.ProgressBar(max_value=len(prediction)) 
+        for i,(file) in enumerate(files):
+            # file name parser
+            file_path = os.path.join(root,file+'.tiff')
+            pred_mask = np.asarray(Image.open(file_path).convert('L'))
+            ph,pw = parse_name(file)
 
-        INPUT: 
-            - target_geo_data_file
-            - sub_mask_files
+            if len(pred_mask.shape)> 2:
+                pred_mask = pred_mask.squeeze()
+    
+            h,w = pred_mask.shape
+            lh,hh,lw,hw = ph,ph+h,pw,pw+w
+            raster_mask[lh:hh,lw:hw] = pred_mask
         
-        OUTPUT:
-            mask_ortho.tif
-
-        '''
-        _func_ = 'Rebuild'
-
-        _ortho_mask_file =self.path_to_save_ortho_mask
-        _target_geo_data_file = target_geo_data_file
-
-        print("[INF|%s] ortho mask: %s"%(_func_,_ortho_mask_file))
-        print("[INF|%s] target geo data file: %s"%(_func_,_target_geo_data_file))
-
-        # Rebuild sub_masks based on the names
-        _ortho_array = _rebuild_ortho_mask(sub_mask_files,self.sub_mask_dir)
-        # Add geo data to array and convert to tif format
-        _ortho_mask_raster = tif.array2raster(  _ortho_mask_file, # path to (output) ortho mask 
-                                                _target_geo_data_file, # path to input ortho file 
-                                                _ortho_array # numpy array with the ortho mask
-                                                )
-        # delete all temp files and directories
-        if os.path.isdir(self.temp_folder):
-            shutil.rmtree(self.temp_folder)
-            print("[WAN|%s] Directory deleted: %s"%(_func_,self.temp_folder))
-        return(_ortho_mask_raster)
+        shutil.rmtree(self.sub_mask_dir)
+        print("[WAN] Directory deleted: %s"%(self.sub_mask_dir))
+        shutil.rmtree(self.sub_img_dir)
+        print("[WAN] Directory deleted: %s"%(self.sub_img_dir))
+        return(raster_mask)
 
 
-    def pipeline(self,path_to_input_ortho):
-        # loading orthomosaic 
-        print("[INF] Loading ortho")
-        orig_raster = self.load_ortho(path_to_input_ortho)
+    def pipeline(self,raster):
         # preprocessing
         print("[INF] Preprocessing")
-        raster = self.preprocessing(orig_raster)
+        raster = self.preprocessing(raster)
         # Splitting
         print("[INF] Ortho splitting")
         sub_img_list = self.ortho_splitting(raster)
@@ -305,7 +271,8 @@ class orthoseg():
         # rebuild orthomask path_to_save_mask_raster,path_to_ortho,path_to_masks
         print("[INF] Rebuilding")
         # path_to_save_mask_ortho = os.path.join(path_to_file,'ortho_mask.tif')
-        ortho = self.rebuild(self.path_to_save_ortho_mask,path_to_input_ortho,sub_img_list)
+        ortho = self.rebuild_ortho_mask(sub_img_list)
+
         print("[INF] Finished")
         return(ortho)
 
