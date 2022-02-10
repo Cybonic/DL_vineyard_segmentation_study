@@ -2,12 +2,13 @@
 device: 'cuda:0'
 name: 'thermal_re_nir'  
 # dataset ['esac1','esac2','valdo']
+run: 'ms/thermal_re_nir'
 dataset:
-  name: Multispectral 
+  name: altum 
   DESKTOP-SSEDT6V: 'E:\Dataset\greenAI\learning'
   DESKTOP-5V7R599: 'D:\OneDrive - isr.uc.pt\Datasets\greenAI\learning'
-  train: ['esac1','esac2']
-  test:  ['valdoeiro']
+  train: [esac,valdoeiro]
+  test:  ['qtabaixo']
   loader:
     shuffle: False
     batch_size: 1

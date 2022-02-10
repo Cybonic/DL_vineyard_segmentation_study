@@ -7,8 +7,8 @@ dataset:
   name: altum 
   DESKTOP-SSEDT6V: 'E:\Dataset\greenAI\drone'
   DESKTOP-5V7R599: 'D:\OneDrive - isr.uc.pt\Datasets\greenAI\learning'
-  train: ['esac1','esac2']
-  test:  ['valdoeiro']
+  train: [esac,valdoeiro]
+  test:  ['qtabaixo']
   loader:
     shuffle: False
     batch_size: 1
