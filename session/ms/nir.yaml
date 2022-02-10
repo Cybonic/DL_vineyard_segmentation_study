@@ -2,6 +2,7 @@
 device: 'cuda:0'
 name: 'nir'  
 # dataset ['esac1','esac2','valdo']
+run: 'ms/nir'
 run: "nir"
 dataset:
   name: altum 
