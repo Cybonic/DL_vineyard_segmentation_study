@@ -10,7 +10,7 @@ The dataset comprises:
 - **High-definition** (HD) orthomosaics (R,G,D)
 - **Digital Surface Models** (DSM)
 
-![figure](vineyard_outline.png) 
+![figure](figs/vineyard_outline.png) 
 
 
 Figure 1: Outline of the three vineyards:
@@ -21,15 +21,16 @@ Figure 1: Outline of the three vineyards:
 | Valdoeiro | f          | g       | h        |    i                 |  
 | Quinta de Baixo|    j  | l       | m        | n                    |
 
-# Sensors
-![Sensors](sensor.png)
+![Orthomosaic](figs/specs.png)
 
-![Orthomosaic](specs.png)
+## Sensors
+![Sensors](figs/sensor.png)
+
 ## Ground Truth
 For the three vineyards,  ground truth masks (pixel-level labels) were generated. The masks include only one class, which identifies vines. However, only the Esac vineyard was completely labeled; the other two orthomosaics were only partially labeled.  
 
 
-![masks](masks.png)
+![masks](figs/masks.png)
 ```
 Link : 
 Orthomosaics
@@ -79,7 +80,7 @@ python 3.7
 
 
 # Orthoseg pipeline 
-To run the pipeline proposed at [paper](https://arxiv.org/abs/2108.01200). 
+To run the pipeline proposed in [paper](https://arxiv.org/abs/2108.01200). 
 
 run: 
 
