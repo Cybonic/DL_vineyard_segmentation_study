@@ -1,9 +1,23 @@
 
-DATASET: https://drive.google.com/drive/folders/1iyrKndWzG9lOM-aVLs2gt3kgJUt0ychE?usp=sharing
+# DATASET: GREEN AI
+
+Link: https://drive.google.com/drive/folders/1iyrKndWzG9lOM-aVLs2gt3kgJUt0ychE?usp=sharing
+
+The dataset contains data from four vineyards of central Portugal: Esac (at Coimbra), Valdoeiro and Quinta de Baixo. The data was acquired with a UAS that had a multispectral sensor and a high-definition camera onboard. The acquired images were used to build orthomosaics and digital surface models (DSM) from the respective plots. 
+
+![figure](vineyard_outline.png) 
+
+Figure 1:  
+- ESAC: b, c, d and e;  
+- Valdoeiro: f, g, h, and i;  
+- Quinta de Baixo: j, l, m, and n.  
+
+The dataset comprises:
+- Mulstispectral(R,G,B,RE,NIR, and Thermal) orthomosaics
+- High-definition orthomosaics 
+- Digital Surface Models
 
 
-The dataset contains data from four vineyards from central Portugal (i.e, two vineyards from Coimbra and one from Valdoeiro). The data was acquired with a UAS that had a multispectral and a high-definition cameras onboard. The acquired images were used to build orthomosaics and digital surface models from the respective sites. 
-The dataset's structure: 
 
 
 ```
@@ -106,38 +120,19 @@ Paper data
 
 
 
-- Mulstispectral(RGB, RE, NIR and Thermal) orthomosaics
-- High-definition orthomosaics 
-- Digital Surface Models 
-- the dataset is divided in three sets (ESAC1, ESAC2 and Valdoeiro), which correspond to three vineyards 
+
 
 
 # Computation setup:
 Laptop: CUDA Version: 11.3 \
 python 3.7 
 
-# Install cuda 
-    $ pip3 install torch==1.8.1+cu111 torchvision==0.9.1+cu111 torchaudio===0.8.1 -f https://download.pytorch.org/whl/torch_stable.html
 
-
-# GDAL Installation on Ubuntu 
-
-based on: https://mothergeo-py.readthedocs.io/en/latest/development/how-to/gdal-ubuntu-pkg.html
-
-
-    $ sudo add-apt-repository ppa:ubuntugis/ppa && sudo apt-get update
-
-    $ sudo apt-get update
-    $ sudo apt-get install gdal-bin
-    $ sudo apt-get install libgdal-dev
-    $ export CPLUS_INCLUDE_PATH=/usr/include/gdal
-    $ export C_INCLUDE_PATH=/usr/include/gdal
-    $ pip install GDAL == <GDAL VERSION FROM OGRINFO>
 
 
 # Orthoseg pipeline 
 
-To run the pipeline that is proposed in the [paper](https://arxiv.org/abs/2108.01200). 
+To run the pipeline proposed at [paper](https://arxiv.org/abs/2108.01200). 
 
 run: 
 
@@ -149,9 +144,6 @@ run:
 The pretrained models with a specific dataset maintain the copyright of such dataset.
 
 Link to preprinted models will be published soon 
-
-# To-Do
-
 
 
 ## Citations
