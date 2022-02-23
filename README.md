@@ -3,17 +3,17 @@
 
 Link: https://drive.google.com/drive/folders/1iyrKndWzG9lOM-aVLs2gt3kgJUt0ychE?usp=sharing
 
-The dataset contains data from four vineyards of central Portugal: Esac (at Coimbra), Valdoeiro and Quinta de Baixo. The data was acquired with a UAS that had a multispectral sensor and a high-definition camera onboard. The acquired images were used to build orthomosaics and digital surface models (DSM) from the respective plots. 
+The dataset contains data from three vineyards of central Portugal: Esac (at Coimbra), Valdoeiro and Quinta de Baixo. The data was acquired with a UAS that had a multispectral sensor and a high-definition camera onboard. The acquired images were used to build orthomosaics and digital surface models (DSM) from the respective plots. 
 
 The dataset comprises:
-- Mulstispectral (MS) orthomosaics (R,G,B,RE,NIR, and Thermal)
-- High-definition (HD) orthomosaics (R,G,D)
-- Digital Surface Models
+- **Mulstispectral** (MS) orthomosaics (R,G,B,RE,NIR, and Thermal)
+- **High-definition** (HD) orthomosaics (R,G,D)
+- **Digital Surface Models** (DSM)
 
 ![figure](vineyard_outline.png) 
 
 
-Figure 1: Outline of the four vineyards:
+Figure 1: Outline of the three vineyards:
 
 |           | RGB-HS     | DSM     |    RGB-MS| False-Color RE-R-G   |     
 |:----------|:----------:|:-------:|:--------:|:---------------------:|     
@@ -21,111 +21,56 @@ Figure 1: Outline of the four vineyards:
 | Valdoeiro | f          | g       | h        |    i                 |  
 | Quinta de Baixo|    j  | l       | m        | n                    |
 
+# Sensors
+![Sensors](sensor.png)
+
+![Orthomosaic](specs.png)
+## Ground Truth
+For the three vineyards,  ground truth masks (pixel-level labels) were generated. The masks include only one class, which identifies vines. However, only the Esac vineyard was completely labeled; the other two orthomosaics were only partially labeled.  
 
 
-
-
+![masks](masks.png)
 ```
-Paper data
-├── ESAC1
-│   ├── altum
-│   │   ├── images
-│   │   │   ├── 00000.tiff
-│   │   │   ├── 00001.tiff
-│   │   │   ...
-│   │   │
-│   │   └── masks
-│   │       ├── 00000.tiff
-│   │       ├── 00001.tiff
-│   │        ...
+Link : 
+Orthomosaics
+│
+├── esac
 │   │
-│   └── x7
-│       ├── images
-│       │   ├── 00000.tiff
-│       │   ├── 00001.tiff
-│       │    ...
-│       │
-│       └── masks
-│           ├── 00000.tiff
-│           ├── 00001.tiff
-│            ...
-│    
-│
-├── ESAC2
-│   ├── altum
-│   │   ├── images
-│   │   │   ├── 00000.tiff
-│   │   │   ├── 00001.tiff
-│   │   │   ...
-│   │   │
-│   │   └── masks
-│   │       ├── 00000.tiff
-│   │       ├── 00001.tiff
-│   │        ...
+│   ├──altum 
+│   │   ├── ortho.tif
+│   │   └── mask.tif
 │   │
-│   └── x7
-│       ├── images
-│       │   ├── 00000.tiff
-│       │   ├── 00001.tiff
-│       │     ...
-│       │
-│       └── masks
-│           ├── 00000.tiff
-│           ├── 00001.tiff
+│   ├── x7
+│   │    ├── ortho.tif
+│   │    └── mask.tif
+│   │
+│   └── dsm.tif
 │
 │
+├── valdoeiro
+│   │
+│   ├──altum 
+│   │   ├── ortho.tif
+│   │   └── mask.tif
+│   ├── x7
+│   │   ├── ortho.tif
+│   │   └── (not available)
+│   │
+│   └── dsm.tif
 │
-├── Valdoeiro
-│   ├── altum
-│   │   ├── images
-│   │   │   ├── 200000.npy 
-│   │   │   ├── 200001.npy 
-│   │   │   ...
-│   │   │
-│   │   └── masks
-│   │       ├── 200000.npy 
-│   │       ├── 200001.npy 
-│   │        ...
-│   └── x7
-│       ├── images
-│       │   ├── 200000.npy 
-│       │   ├── 200001.npy 
-│       │    ...
-│       │
-│       └── masks
-│           ├── 200000.npy 
-│           ├── 200001.npy 
-│            ...
-│            
 │
-└── QtaBaixo
-    ├── altum
-    │   ├── images
-    │   │   ├── 00000.tiff
-    │   │   ├── 00001.tiff
-    │   │   ...
-    │   │
-    │   └── masks
-    │       ├── 00000.tiff
-    │       ├── 00001.tiff
-    │        ...
-    └── x7
-        ├── images
-        │   ├── 00000.tiff
-        │   ├── 00001.tiff
-        │    ...
-        │
-        └── masks
-            ├── 00000.tiff
-            ├── 00001.tiff
-            ...
-            
+└── qtabaixo
+    │
+    ├──altum 
+    │   ├── ortho.tif
+    │   └── mask.tif
+    │
+    ├── x7
+    │   ├── ortho.tif
+    │   └── (not available)
+    │
+    └── dsm.tif
 ```
-
-
-
-
-
 
 
 # Computation setup:
@@ -133,15 +78,12 @@ Laptop: CUDA Version: 11.3 \
 python 3.7 
 
 
-
-
 # Orthoseg pipeline 
-
 To run the pipeline proposed at [paper](https://arxiv.org/abs/2108.01200). 
 
 run: 
 
-    $ orthosegmentation.py 
+    orthosegmentation.py 
 
 
 # Pretrained models: Model and Dataset Dependent
