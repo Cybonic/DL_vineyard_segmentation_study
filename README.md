@@ -5,17 +5,22 @@ Link: https://drive.google.com/drive/folders/1iyrKndWzG9lOM-aVLs2gt3kgJUt0ychE?u
 
 The dataset contains data from four vineyards of central Portugal: Esac (at Coimbra), Valdoeiro and Quinta de Baixo. The data was acquired with a UAS that had a multispectral sensor and a high-definition camera onboard. The acquired images were used to build orthomosaics and digital surface models (DSM) from the respective plots. 
 
+The dataset comprises:
+- Mulstispectral (MS) orthomosaics (R,G,B,RE,NIR, and Thermal)
+- High-definition (HD) orthomosaics (R,G,D)
+- Digital Surface Models
+
 ![figure](vineyard_outline.png) 
 
-Figure 1:  
-- ESAC: b, c, d and e;  
-- Valdoeiro: f, g, h, and i;  
-- Quinta de Baixo: j, l, m, and n.  
 
-The dataset comprises:
-- Mulstispectral(R,G,B,RE,NIR, and Thermal) orthomosaics
-- High-definition orthomosaics 
-- Digital Surface Models
+Figure 1: Outline of the four vineyards:
+
+|           | RGB-HS     | DSM     |    RGB-MS| False-Color RE-R-G   |     
+|:----------|:----------:|:-------:|:--------:|:---------------------:|     
+| ESAC      | b          | c       | d        | e                    |        
+| Valdoeiro | f          | g       | h        |    i                 |  
+| Quinta de Baixo|    j  | l       | m        | n                    |
+
 
 
 
