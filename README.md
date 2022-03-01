@@ -99,12 +99,13 @@ Link to preprinted models will be published soon
 If you use our framework, model, or predictions for any academic work, please cite the original [paper](https://arxiv.org/abs/2108.01200).
 
 ```
-@article{barros2021attdlnet,  
-    title={AttDLNet: Attention-based DL network for 3D LiDAR place recognition},  
-    author={Barros, Tiago and Garrote, Lu{\'\i}s and Pereira, Ricardo and Premebida, Cristiano and Nunes, Urbano J},  
-    journal={arXiv preprint arXiv:2106.09637},  
-    year={2021}  
+@article{barros2021multispectral,
+  title={Multispectral Vineyard Segmentation: A Deep Learning approach},
+  author={Barros, T and Conde, P and Gon{\c{c}}alves, G and Premebida, C and Monteiro, M and Ferreira, CSS and Nunes, UJ},
+  journal={arXiv preprint arXiv:2108.01200},
+  year={2021}
 }
+
 ``` 
 
 
