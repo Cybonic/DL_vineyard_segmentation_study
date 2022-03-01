@@ -1,7 +1,7 @@
 
 # DATASET: GREEN AI
 
-Link: https://drive.google.com/drive/folders/1iyrKndWzG9lOM-aVLs2gt3kgJUt0ychE?usp=sharing
+Download dataset from [HERE](https://isrucpt-my.sharepoint.com/:f:/g/personal/tiagobarros_isr_uc_pt/EgHCeLjA1kRDmFkCckpon-IBwqEW1qgim_CQFmOB5S9xOg?e=3Kx4vq)
 
 The dataset contains data from three vineyards of central Portugal: Esac (at Coimbra), Valdoeiro and Quinta de Baixo. The data was acquired with a UAS that had a multispectral sensor and a high-definition camera onboard. The acquired images were used to build orthomosaics and digital surface models (DSM) from the respective plots. 
 
@@ -94,9 +94,18 @@ The pretrained models with a specific dataset maintain the copyright of such dat
 Link to preprinted models will be published soon 
 
 
-## Citations
+# Citations
 
-If you use our framework, model, or predictions for any academic work, please cite the original [paper](https://arxiv.org/abs/2108.01200), and the [dataset](https://drive.google.com/drive/folders/1PeDqlXa-TISJcPGB2kaJ547LV5M3E_xU?usp=sharing).
+If you use our framework, model, or predictions for any academic work, please cite the original [paper](https://arxiv.org/abs/2108.01200).
+
+```
+@article{barros2021attdlnet,  
+    title={AttDLNet: Attention-based DL network for 3D LiDAR place recognition},  
+    author={Barros, Tiago and Garrote, Lu{\'\i}s and Pereira, Ricardo and Premebida, Cristiano and Nunes, Urbano J},  
+    journal={arXiv preprint arXiv:2106.09637},  
+    year={2021}  
+}
+``` 
 
 
 ## License
