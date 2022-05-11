@@ -96,14 +96,19 @@ Link to preprinted models will be published soon
 
 # Citations
 
-If you use our framework, model, or predictions for any academic work, please cite the original [paper](https://arxiv.org/abs/2108.01200).
+If you use our framework, model, or predictions for any academic work, please cite the original [paper](https://www.sciencedirect.com/science/article/abs/pii/S0168169922000990).
 
 ```
-@article{barros2021multispectral,
-  title={Multispectral Vineyard Segmentation: A Deep Learning approach},
-  author={Barros, T and Conde, P and Gon{\c{c}}alves, G and Premebida, C and Monteiro, M and Ferreira, CSS and Nunes, UJ},
-  journal={arXiv preprint arXiv:2108.01200},
-  year={2021}
+@article{BARROS2022106782,
+title = {Multispectral vineyard segmentation: A deep learning comparison study},
+journal = {Computers and Electronics in Agriculture},
+volume = {195},
+pages = {106782},
+year = {2022},
+issn = {0168-1699},
+doi = {https://doi.org/10.1016/j.compag.2022.106782},
+url = {https://www.sciencedirect.com/science/article/pii/S0168169922000990},
+author = {T. Barros and P. Conde and G. Gonçalves and C. Premebida and M. Monteiro and C.S.S. Ferreira and U.J. Nunes},
 }
 
 ``` 
