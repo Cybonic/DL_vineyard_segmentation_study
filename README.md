@@ -1,7 +1,7 @@
 
 # DATASET: GREEN AI
 
-Download dataset from [HERE](https://isrucpt-my.sharepoint.com/:f:/g/personal/tiagobarros_isr_uc_pt/EgHCeLjA1kRDmFkCckpon-IBVGbXXo1FtBVYDhhfRetaJQ?e=mE1XZk)
+
 
 The dataset contains data from three vineyards of central Portugal: Esac (at Coimbra), Valdoeiro and Quinta de Baixo. The data was acquired with a UAS that had a multispectral sensor and a high-definition camera onboard. The acquired images were used to build orthomosaics and digital surface models (DSM) from the respective plots. 
 
@@ -87,11 +87,8 @@ run:
     orthosegmentation.py 
 
 
-# Pretrained models: Model and Dataset Dependent
-
-The pretrained models with a specific dataset maintain the copyright of such dataset.
-
-Link to preprinted models will be published soon 
+# Download Dataset
+Please send an e-mail to tiagobarros@isr.uc.pt
 
 
 # Citations
